@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LogIn } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
+import { safeNextPath } from "@/lib/utils";
 
 export default function LoginForm() {
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/admin";
+  const next = safeNextPath(search.get("next"), "/admin");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,8 +33,11 @@ export default function LoginForm() {
         return;
       }
       toast.success("Welcome back!");
-      // Hard navigation so middleware/server components see the new session.
-      window.location.href = next;
+      // The session cookies are already written by the browser client, so
+      // a client-side navigation lands on the dashboard with the fresh
+      // session — no full document reload needed.
+      router.replace(next);
+      requestAnimationFrame(() => router.refresh());
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Try again.");

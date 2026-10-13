@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { safeNextPath } from "@/lib/utils";
 import { useLocale } from "@/components/providers/LocaleProvider";
 
 export default function SignupForm() {
   const { t: d } = useLocale();
+  const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/orders";
+  const next = safeNextPath(search.get("next"), "/orders");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -52,7 +54,9 @@ export default function SignupForm() {
       // If confirmation is off, session is set and we can proceed straight in.
       if (data.session) {
         toast.success(d.auth.accountCreated);
-        window.location.href = next;
+        // Same-origin client navigation — no full page reload.
+        router.replace(next);
+        requestAnimationFrame(() => router.refresh());
       } else {
         setDone({ needsConfirm: true });
       }

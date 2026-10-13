@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { LogIn, LogOut, Package, Shield, UserPlus } from "lucide-react";
+import { LogIn, Package, Shield, UserPlus } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { signOutCustomerAction } from "@/app/actions/auth";
+import { isAdminEmail, subscribeToAuth } from "@/lib/auth-client";
+import SignOutButton from "@/components/auth/SignOutButton";
 import { formatBdPhone } from "@/lib/phone";
 import { useLocale } from "@/components/providers/LocaleProvider";
 
@@ -30,33 +30,21 @@ export default function UserMenu() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    const supabase = createClient();
-
-    const checkAdmin = async (u: User | null) => {
-      // Phone-only customers don't have an email, so they can't be admin.
-      if (!u?.email) {
-        setIsAdmin(false);
-        return;
-      }
-      const { data } = await supabase
-        .from("admin_emails")
-        .select("email")
-        .ilike("email", u.email)
-        .maybeSingle();
-      setIsAdmin(!!data);
-    };
-
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      checkAdmin(data.user);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      const u = session?.user ?? null;
+    // Session comes from local storage (no network round-trip) and the
+    // admin lookup is memoised across every component on the page, so
+    // rendering the avatar is free.
+    let disposed = false;
+    const unsubscribe = subscribeToAuth(async (u) => {
+      if (disposed) return;
       setUser(u);
-      checkAdmin(u);
+      // Phone-only customers have no email, so they can't be admin.
+      const admin = u?.email ? await isAdminEmail(u.email) : false;
+      if (!disposed) setIsAdmin(admin);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   }, []);
 
   // Close on outside click
@@ -163,15 +151,13 @@ export default function UserMenu() {
             </Link>
           )}
 
-          <form action={signOutCustomerAction}>
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 transition"
-            >
-              <LogOut className="h-4 w-4" />
-              {d.nav.signOut}
-            </button>
-          </form>
+          <SignOutButton
+            next="/"
+            onSignedOut={() => setOpen(false)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 transition disabled:opacity-70"
+          >
+            {d.nav.signOut}
+          </SignOutButton>
         </div>
       )}
     </div>

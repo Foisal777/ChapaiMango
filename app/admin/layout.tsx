@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import Sidebar from "@/components/admin/Sidebar";
-import { signOutAction } from "@/app/admin/actions";
+import SignOutButton from "@/components/auth/SignOutButton";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { getAuthContext } from "@/lib/auth";
 
@@ -53,14 +53,12 @@ on conflict do nothing;`}
             <Link href="/" className="btn-ghost text-xs py-2">
               হোম
             </Link>
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition"
-              >
-                সাইন আউট
-              </button>
-            </form>
+            <SignOutButton
+              next="/admin/login"
+              className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-70"
+            >
+              সাইন আউট
+            </SignOutButton>
           </div>
         </div>
       </div>

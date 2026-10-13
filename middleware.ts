@@ -6,12 +6,22 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  /**
+   * Only the routes where middleware actually makes an auth decision.
+   *
+   * It used to run on every request (`/((?!_next/static|…).*)`) just to
+   * end up calling `NextResponse.next()` on the home page, products,
+   * cart, about, … — and each of those invocations performed a Supabase
+   * `getUser()` round-trip, including for `Link` prefetches. Scoping the
+   * matcher means browsing the storefront never enters middleware at all,
+   * and the auth routes below still get instant redirects.
+   */
   matcher: [
-    /**
-     * Match all request paths except:
-     * - _next/static, _next/image, favicon.ico
-     * - image files
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"
+    "/admin/:path*",
+    "/checkout",
+    "/orders",
+    "/orders/:path*",
+    "/login",
+    "/signup"
   ]
 };

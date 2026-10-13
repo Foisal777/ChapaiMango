@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, LogIn, Mail, Smartphone } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 import { isValidBdPhone, normalizeBdPhone } from "@/lib/phone";
-import { cn } from "@/lib/utils";
+import { cn, safeNextPath } from "@/lib/utils";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useLocale } from "@/components/providers/LocaleProvider";
 
@@ -14,8 +14,9 @@ type AuthMode = "phone" | "email";
 
 export default function LoginForm() {
   const { t: d } = useLocale();
+  const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/orders";
+  const next = safeNextPath(search.get("next"), "/orders");
   const oauthError = search.get("error");
 
   const [mode, setMode] = useState<AuthMode>("phone");
@@ -66,7 +67,18 @@ export default function LoginForm() {
         return;
       }
       toast.success(d.auth.welcome);
-      window.location.href = next;
+      /*
+       * Client-side navigation instead of `window.location.href`.
+       *
+       * The browser client already wrote the session cookies, so the
+       * server renders the destination as signed-in on the first try —
+       * and the customer skips a full document reload (the blank-screen
+       * second that made signing in feel slow). The follow-up refresh
+       * drops any RSC payload that was cached while signed OUT (e.g. a
+       * prefetched /checkout redirect).
+       */
+      router.replace(next);
+      requestAnimationFrame(() => router.refresh());
     } catch (err) {
       console.error(err);
       setError(d.auth.genericError);

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import type {
   MarqueeItem,
   Mango,
@@ -7,6 +8,23 @@ import type {
   TeamMember,
   Testimonial
 } from "@/types";
+import { CACHE_TAGS } from "@/lib/cache-tags";
+import { createPublicClient } from "@/lib/supabase/public";
+
+/*
+ * PERFORMANCE NOTE — why everything in this file is wrapped in
+ * `unstable_cache`.
+ *
+ * These loaders feed the storefront (home, /products, /products/[slug],
+ * /team, /refund, the promo marquee, …), and every one of them used to
+ * talk to Supabase over the network on EVERY request, because the
+ * server client calls `cookies()` (which also makes the route dynamic).
+ *
+ * Now they use the cookie-free anon client (`@/lib/supabase/public`) and
+ * are cached by Next under a tag. Result: repeat page views render with
+ * zero Supabase round-trips, and the admin actions call
+ * `revalidateTag(CACHE_TAGS.x)` so an edit is still visible instantly.
+ */
 
 const ORIGIN = "নিজামপুর, নাচোল, চাঁপাইনবাবগঞ্জ, বাংলাদেশ";
 
@@ -151,44 +169,46 @@ export const MOCK_TESTIMONIALS: Testimonial[] = [
   }
 ];
 
-/** Try Supabase first, fall back to mock data. */
-export async function getProducts(): Promise<Mango[]> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return MOCK_PRODUCTS;
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("is_featured", { ascending: false });
-    if (error || !data || data.length === 0) return MOCK_PRODUCTS;
-    return data as Mango[];
-  } catch {
-    return MOCK_PRODUCTS;
-  }
-}
-
-export async function getProductBySlug(slug: string): Promise<Mango | null> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (isSupabaseConfigured()) {
-      const supabase = createClient();
-      const { data } = await supabase
+/** Try Supabase first, fall back to mock data. Cached + tag-revalidated. */
+export const getProducts = unstable_cache(
+  async (): Promise<Mango[]> => {
+    const supabase = createPublicClient();
+    if (!supabase) return MOCK_PRODUCTS;
+    try {
+      const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-      if (data) return data as Mango;
+        .order("is_featured", { ascending: false });
+      if (error || !data || data.length === 0) return MOCK_PRODUCTS;
+      return data as Mango[];
+    } catch {
+      return MOCK_PRODUCTS;
     }
-  } catch {
-    /* fall through */
-  }
-  return MOCK_PRODUCTS.find((p) => p.slug === slug) ?? null;
-}
+  },
+  ["products-list"],
+  { tags: [CACHE_TAGS.products], revalidate: 600 }
+);
+
+export const getProductBySlug = unstable_cache(
+  async (slug: string): Promise<Mango | null> => {
+    const supabase = createPublicClient();
+    if (supabase) {
+      try {
+        const { data } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", slug)
+          .maybeSingle();
+        if (data) return data as Mango;
+      } catch {
+        /* fall through to the built-in list */
+      }
+    }
+    return MOCK_PRODUCTS.find((p) => p.slug === slug) ?? null;
+  },
+  ["product-by-slug"],
+  { tags: [CACHE_TAGS.products], revalidate: 600 }
+);
 
 /**
  * Customer testimonials shown on the home page.
@@ -221,47 +241,49 @@ type ReviewWithProduct = {
   product: { name: string; slug: string } | null;
 };
 
-export async function getTestimonials(): Promise<Testimonial[]> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
+export const getTestimonials = unstable_cache(
+  async (): Promise<Testimonial[]> => {
+    const supabase = createPublicClient();
     // Dev / unconfigured — show the mock so the section isn't empty.
-    if (!isSupabaseConfigured()) return MOCK_TESTIMONIALS;
+    if (!supabase) return MOCK_TESTIMONIALS;
 
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("product_reviews")
-      .select(
-        "id, author_name, rating, body, created_at, product:products(name, slug)"
-      )
-      .eq("is_approved", true)
-      .gte("rating", 4)
-      .order("created_at", { ascending: false })
-      .limit(20);
+    try {
+      const { data, error } = await supabase
+        .from("product_reviews")
+        .select(
+          "id, author_name, rating, body, created_at, product:products(name, slug)"
+        )
+        .eq("is_approved", true)
+        .gte("rating", 4)
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-    if (error || !data) return [];
+      if (error || !data) return [];
 
-    const rows = data as unknown as ReviewWithProduct[];
-    return rows
-      .filter((r) => (r.body || "").trim().length >= 30)
-      .slice(0, 6)
-      .map((r) => ({
-        id: r.id,
-        name: r.author_name || "গ্রাহক",
-        // Show the product the review is for as the secondary line —
-        // works as a "verified buyer of X" social-proof signal.
-        location: r.product?.name
-          ? `${r.product.name} এর গ্রাহক`
-          : "যাচাইকৃত গ্রাহক",
-        message: r.body,
-        rating: Math.max(1, Math.min(5, Math.round(r.rating)))
-      }));
-  } catch {
-    // Network / RLS hiccup — fail closed (empty), home page hides the section.
-    return [];
-  }
-}
+      const rows = data as unknown as ReviewWithProduct[];
+      return rows
+        .filter((r) => (r.body || "").trim().length >= 30)
+        .slice(0, 6)
+        .map((r) => ({
+          id: r.id,
+          name: r.author_name || "গ্রাহক",
+          // Show the product the review is for as the secondary line —
+          // works as a "verified buyer of X" social-proof signal.
+          location: r.product?.name
+            ? `${r.product.name} এর গ্রাহক`
+            : "যাচাইকৃত গ্রাহক",
+          message: r.body,
+          rating: Math.max(1, Math.min(5, Math.round(r.rating)))
+        }));
+    } catch {
+      // Network / RLS hiccup — fail closed (empty), home page hides the section.
+      return [];
+    }
+  },
+  ["home-testimonials"],
+  { tags: [CACHE_TAGS.reviews], revalidate: 300 }
+);
+
 
 
 
@@ -270,28 +292,26 @@ export async function getTestimonials(): Promise<Testimonial[]> {
  * Falls back to an empty list when Supabase is not configured (so the
  * product page still renders cleanly in dev).
  */
-export async function getProductReviews(
-  productId: string,
-  limit = 50
-): Promise<ProductReview[]> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return [];
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("product_reviews")
-      .select("*")
-      .eq("product_id", productId)
-      .eq("is_approved", true)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    return (data || []) as ProductReview[];
-  } catch {
-    return [];
-  }
-}
+export const getProductReviews = unstable_cache(
+  async (productId: string, limit = 50): Promise<ProductReview[]> => {
+    const supabase = createPublicClient();
+    if (!supabase) return [];
+    try {
+      const { data } = await supabase
+        .from("product_reviews")
+        .select("*")
+        .eq("product_id", productId)
+        .eq("is_approved", true)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      return (data || []) as ProductReview[];
+    } catch {
+      return [];
+    }
+  },
+  ["product-reviews"],
+  { tags: [CACHE_TAGS.reviews], revalidate: 300 }
+);
 
 /**
  * Aggregate rating stats for a single product.
@@ -304,28 +324,27 @@ export async function getProductReviews(
  * whether to omit the AggregateRating block (Google requires count > 0
  * to render rich-result stars).
  */
-export async function getProductRatingStats(
-  productId: string
-): Promise<ProductRatingStats> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return { average: 5, count: 0 };
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("rating, review_count")
-      .eq("id", productId)
-      .maybeSingle();
-    return {
-      average: Number(data?.rating ?? 5),
-      count: Number(data?.review_count ?? 0)
-    };
-  } catch {
-    return { average: 5, count: 0 };
-  }
-}
+export const getProductRatingStats = unstable_cache(
+  async (productId: string): Promise<ProductRatingStats> => {
+    const supabase = createPublicClient();
+    if (!supabase) return { average: 5, count: 0 };
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select("rating, review_count")
+        .eq("id", productId)
+        .maybeSingle();
+      return {
+        average: Number(data?.rating ?? 5),
+        count: Number(data?.review_count ?? 0)
+      };
+    } catch {
+      return { average: 5, count: 0 };
+    }
+  },
+  ["product-rating-stats"],
+  { tags: [CACHE_TAGS.reviews, CACHE_TAGS.products], revalidate: 300 }
+);
 
 
 
@@ -387,24 +406,25 @@ const MOCK_MARQUEES: MarqueeItem[] = [
  * promo strip. Falls back to MOCK_MARQUEES when Supabase isn't
  * configured or returns no rows so the strip never renders empty.
  */
-export async function getActiveMarquees(): Promise<MarqueeItem[]> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return MOCK_MARQUEES;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("marquee_items")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true });
-    if (!data || data.length === 0) return MOCK_MARQUEES;
-    return data as MarqueeItem[];
-  } catch {
-    return MOCK_MARQUEES;
-  }
-}
+export const getActiveMarquees = unstable_cache(
+  async (): Promise<MarqueeItem[]> => {
+    const supabase = createPublicClient();
+    if (!supabase) return MOCK_MARQUEES;
+    try {
+      const { data } = await supabase
+        .from("marquee_items")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (!data || data.length === 0) return MOCK_MARQUEES;
+      return data as MarqueeItem[];
+    } catch {
+      return MOCK_MARQUEES;
+    }
+  },
+  ["active-marquees"],
+  { tags: [CACHE_TAGS.marquees], revalidate: 600 }
+);
 
 
 
@@ -467,25 +487,26 @@ const MOCK_TEAM: TeamMember[] = [
  * first, then suppliers, then members), but we still order by
  * sort_order inside each role so the operator can rearrange.
  */
-export async function getActiveTeamMembers(): Promise<TeamMember[]> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return MOCK_TEAM;
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("team_members")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true });
-    if (!data || data.length === 0) return MOCK_TEAM;
-    return data as TeamMember[];
-  } catch {
-    return MOCK_TEAM;
-  }
-}
+export const getActiveTeamMembers = unstable_cache(
+  async (): Promise<TeamMember[]> => {
+    const supabase = createPublicClient();
+    if (!supabase) return MOCK_TEAM;
+    try {
+      const { data } = await supabase
+        .from("team_members")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (!data || data.length === 0) return MOCK_TEAM;
+      return data as TeamMember[];
+    } catch {
+      return MOCK_TEAM;
+    }
+  },
+  ["active-team-members"],
+  { tags: [CACHE_TAGS.team], revalidate: 600 }
+);
 
 
 // ----- Refund policy -----
@@ -499,24 +520,25 @@ const MOCK_REFUND_POLICY: RefundPolicy = {
   updated_at: ""
 };
 
-export async function getRefundPolicy(): Promise<RefundPolicy> {
-  try {
-    const { isSupabaseConfigured, createClient } = await import(
-      "@/lib/supabase/server"
-    );
-    if (!isSupabaseConfigured()) return MOCK_REFUND_POLICY;
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("refund_policy")
-      .select("body_md, updated_at")
-      .eq("id", 1)
-      .maybeSingle();
-    if (error || !data) return MOCK_REFUND_POLICY;
-    return {
-      body_md: data.body_md || MOCK_REFUND_POLICY.body_md,
-      updated_at: data.updated_at || ""
-    };
-  } catch {
-    return MOCK_REFUND_POLICY;
-  }
-}
+export const getRefundPolicy = unstable_cache(
+  async (): Promise<RefundPolicy> => {
+    const supabase = createPublicClient();
+    if (!supabase) return MOCK_REFUND_POLICY;
+    try {
+      const { data, error } = await supabase
+        .from("refund_policy")
+        .select("body_md, updated_at")
+        .eq("id", 1)
+        .maybeSingle();
+      if (error || !data) return MOCK_REFUND_POLICY;
+      return {
+        body_md: data.body_md || MOCK_REFUND_POLICY.body_md,
+        updated_at: data.updated_at || ""
+      };
+    } catch {
+      return MOCK_REFUND_POLICY;
+    }
+  },
+  ["refund-policy"],
+  { tags: [CACHE_TAGS.refundPolicy], revalidate: 600 }
+);

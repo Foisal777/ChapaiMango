@@ -1,7 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 export type ReviewInput = {
   product_id: string;
@@ -82,6 +83,9 @@ export async function submitReviewAction(
     return { error: error.message };
   }
 
+  // Public pages are served from the tag cache now (see lib/data.ts), so
+  // bust the reviews tag as well as the route caches.
+  revalidateTag(CACHE_TAGS.reviews);
   revalidatePath(`/products/${input.product_slug}`);
   revalidatePath("/products");
   revalidatePath("/");
@@ -108,6 +112,7 @@ export async function deleteOwnReviewAction(
     .eq("user_id", user.id);
   if (error) return { error: error.message };
 
+  revalidateTag(CACHE_TAGS.reviews);
   revalidatePath(`/products/${productSlug}`);
   return { ok: true, id: reviewId };
 }

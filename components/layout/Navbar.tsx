@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LogIn, LogOut, Menu, Package, Shield, ShoppingBag, UserPlus, X } from "lucide-react";
+import { LogIn, Menu, Package, Shield, ShoppingBag, UserPlus, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
 import UserMenu from "./UserMenu";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { signOutCustomerAction } from "@/app/actions/auth";
+import SignOutButton from "@/components/auth/SignOutButton";
+import { isAdminEmail, subscribeToAuth } from "@/lib/auth-client";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -46,30 +46,20 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    const supabase = createClient();
-    const checkAdmin = async (u: User | null) => {
-      if (!u?.email) {
-        setIsAdmin(false);
-        return;
-      }
-      const { data } = await supabase
-        .from("admin_emails")
-        .select("email")
-        .ilike("email", u.email)
-        .maybeSingle();
-      setIsAdmin(!!data);
-    };
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      checkAdmin(data.user);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      const u = session?.user ?? null;
+    // Shared, memoised session + admin lookup — see lib/auth-client.ts.
+    // No network round-trip on page load, and the same `admin_emails`
+    // query is reused by the desktop UserMenu instead of being repeated.
+    let disposed = false;
+    const unsubscribe = subscribeToAuth(async (u) => {
+      if (disposed) return;
       setUser(u);
-      checkAdmin(u);
+      const admin = u?.email ? await isAdminEmail(u.email) : false;
+      if (!disposed) setIsAdmin(admin);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      disposed = true;
+      unsubscribe();
+    };
   }, []);
 
   return (
@@ -207,16 +197,13 @@ export default function Navbar() {
                       {d.nav.adminPanel}
                     </Link>
                   )}
-                  <form action={signOutCustomerAction}>
-                    <button
-                      type="submit"
-                      onClick={() => setOpen(false)}
-                      className="py-3 text-base font-medium text-red-600 inline-flex items-center gap-2"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {d.nav.signOut}
-                    </button>
-                  </form>
+                  <SignOutButton
+                    next="/"
+                    onSignedOut={() => setOpen(false)}
+                    className="py-3 text-base font-medium text-red-600 inline-flex items-center gap-2 disabled:opacity-70"
+                  >
+                    {d.nav.signOut}
+                  </SignOutButton>
                 </>
               )}
             </div>

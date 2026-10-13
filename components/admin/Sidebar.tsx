@@ -14,12 +14,11 @@ import {
   Users,
   FileText,
   Settings,
-  LogOut,
   Menu,
   X,
   ExternalLink
 } from "lucide-react";
-import { signOutAction } from "@/app/admin/actions";
+import SignOutButton from "@/components/auth/SignOutButton";
 import { cn } from "@/lib/utils";
 
 // Note: there's no /admin/payment-methods entry — payment config
@@ -133,15 +132,13 @@ export default function Sidebar({ email }: { email: string }) {
             <div className="text-xs text-ink/80 truncate">{email}</div>
           </div>
 
-          <form action={signOutAction}>
-            <button
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
+          <SignOutButton
+            next="/admin/login"
+            onSignedOut={() => setOpen(false)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-70"
+          >
+            Sign out
+          </SignOutButton>
         </div>
       </aside>
     </>

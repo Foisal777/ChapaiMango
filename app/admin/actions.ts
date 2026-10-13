@@ -8,6 +8,7 @@ import {
   type SiteSettings
 } from "@/lib/settings-schema";
 import { SETTINGS_TAG } from "@/lib/settings";
+import { CACHE_TAGS } from "@/lib/cache-tags";
 
 // ----- Auth -----
 
@@ -96,6 +97,7 @@ export async function upsertProductAction(
     if (error) return { error: error.message };
   }
 
+  revalidateTag(CACHE_TAGS.products);
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath("/");
@@ -112,6 +114,7 @@ export async function deleteProductAction(productId: string) {
     .delete()
     .eq("id", productId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.products);
   revalidatePath("/admin/products");
   revalidatePath("/products");
   revalidatePath("/");
@@ -152,6 +155,8 @@ export async function setReviewApprovalAction(
   if (error) return { error: error.message };
   // The recompute trigger already refreshes products.rating/review_count,
   // we just need to bust the relevant caches.
+  revalidateTag(CACHE_TAGS.reviews);
+  revalidateTag(CACHE_TAGS.products);
   revalidatePath("/admin/reviews");
   revalidatePath("/products");
   revalidatePath("/");
@@ -168,6 +173,8 @@ export async function deleteReviewAction(reviewId: string) {
     .delete()
     .eq("id", reviewId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.reviews);
+  revalidateTag(CACHE_TAGS.products);
   revalidatePath("/admin/reviews");
   revalidatePath("/products");
   revalidatePath("/");
@@ -328,6 +335,7 @@ export async function upsertMarqueeAction(
     if (error) return { error: error.message };
   }
 
+  revalidateTag(CACHE_TAGS.marquees);
   revalidatePath("/admin/marquees");
   // Marquee is rendered in SiteShell on every public page — bust the
   // root + a couple of high-traffic ones so the change shows up fast.
@@ -347,6 +355,7 @@ export async function deleteMarqueeAction(marqueeId: string) {
     .delete()
     .eq("id", marqueeId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.marquees);
   revalidatePath("/admin/marquees");
   revalidatePath("/");
   revalidatePath("/products");
@@ -366,6 +375,7 @@ export async function toggleMarqueeAction(
     .update({ is_active: isActive })
     .eq("id", marqueeId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.marquees);
   revalidatePath("/admin/marquees");
   revalidatePath("/");
   revalidatePath("/products");
@@ -454,6 +464,7 @@ export async function upsertTeamMemberAction(
     if (error) return { error: error.message };
   }
 
+  revalidateTag(CACHE_TAGS.team);
   revalidatePath("/admin/team");
   revalidatePath("/team");
   revalidatePath("/about");
@@ -470,6 +481,7 @@ export async function deleteTeamMemberAction(memberId: string) {
     .delete()
     .eq("id", memberId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.team);
   revalidatePath("/admin/team");
   revalidatePath("/team");
   return { ok: true };
@@ -488,6 +500,7 @@ export async function toggleTeamMemberAction(
     .update({ is_active: isActive })
     .eq("id", memberId);
   if (error) return { error: error.message };
+  revalidateTag(CACHE_TAGS.team);
   revalidatePath("/admin/team");
   revalidatePath("/team");
   return { ok: true };
@@ -524,6 +537,7 @@ export async function updateRefundPolicyAction(bodyMd: string) {
     .upsert({ id: 1, body_md: trimmed }, { onConflict: "id" });
   if (error) return { error: error.message };
 
+  revalidateTag(CACHE_TAGS.refundPolicy);
   revalidatePath("/admin/refund-policy");
   revalidatePath("/refund");
   return { ok: true };
