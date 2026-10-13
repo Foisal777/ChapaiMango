@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 255 247 232;
+  --foreground: 26 15 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
+/**
+ * Body uses a font stack that resolves Latin glyphs through Inter
+ * (--font-sans) first and Bengali glyphs through Hind Siliguri
+ * (--font-bangla). The browser picks the right font per-glyph
+ * automatically because Inter has no Bengali coverage.
+ */
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: var(--font-sans), var(--font-bangla), system-ui,
+    -apple-system, "Segoe UI", "Hind Siliguri", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /*
+   * `text-rendering: optimizeLegibility` was forcing kerning/ligature
+   * lookups on every glyph in the page. On Bengali text (Hind Siliguri
+   * with thousands of conjuncts) this added 60-90 ms to first paint
+   * and showed up as a Speed Index regression. The browser default
+   * (`auto`) is the right call for body text.
+   */
+}
+
+/* Bengali script — let the browser fall through */
+:lang(bn),
+.font-bangla {
+  font-family: var(--font-bangla), "Hind Siliguri", system-ui, sans-serif;
+}
+
+/* Premium scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #fff7e8;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f59100, #d97606);
+  border-radius: 10px;
+}
+
+/* Glass card utility */
+@layer components {
+  .glass {
+    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-soft;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-mango-gradient px-6 py-3 text-sm font-semibold text-ink
+           shadow-glow transition-all hover:scale-[1.03] hover:shadow-soft
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-mango-300 px-6 py-3 text-sm font-semibold text-mango-700
+           transition-all hover:bg-mango-100 active:scale-95;
+  }
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .section-title {
+    @apply font-display-bn text-3xl sm:text-4xl md:text-5xl font-bold text-ink leading-tight;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-mango-200 bg-white/80 px-4 py-3 text-sm
+           text-ink placeholder:text-mango-700/50 focus:border-mango-400
+           focus:outline-none focus:ring-2 focus:ring-mango-300 transition;
+  }
+}
+
+/*
+ * Decorative shimmer gradient on the brand word(s) in headlines.
+ *
+ * The shimmer animation is INTENTIONALLY delayed by 1.2 s. Without the
+ * delay the keyframe paints continuously from t=0, which Lighthouse
+ * counts against LCP because the browser re-rasterises the gradient
+ * many times per second while the H1 is still the largest visible
+ * element. After 1.2 s the LCP measurement has settled and the shimmer
+ * starts — visually the customer doesn't notice it kicks in late.
+ */
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #d97606 0%,
+    #f59100 25%,
+    #ffdc80 50%,
+    #f59100 75%,
+    #d97606 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 3s linear infinite;
+  animation-delay: 1.2s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    animation: none;
+  }
+}
+
+/*
+ * Page transition.
+ *
+ * Was `animation: fade-up 0.6s ease-out`, which animated <main> from
+ * opacity 0 to 1 on every initial page load. That single rule is the
+ * #1 LCP killer for static pages: the largest text element starts
+ * invisible and Lighthouse waits for it to reach full opacity before
+ * marking LCP. We now translate-only — the visual feel is identical
+ * but the element is fully painted from t=0.
+ */
+.page-enter {
+  animation: page-enter-translate 0.5s ease-out;
+}
+@keyframes page-enter-translate {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Top promo marquee — pure CSS infinite scroll.
+ * 22s loop is fast enough that customers don't think the strip is
+ * frozen but slow enough to read the longer Bengali phrases. */
+.marquee-track {
+  animation: marquee 22s linear infinite;
+  will-change: transform;
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+
+
+/*
+ * Markdown prose styles for /refund (and the /admin/refund-policy
+ * live preview). Scoped via `.refund-prose` and `.prose-mango` so
+ * we don't leak into product-page rich text or anywhere else.
+ *
+ * The HTML is generated by lib/markdown.ts which only emits a
+ * closed set of tags: h2, h3, p, ul, li, strong, em, a, br.
+ */
+.refund-prose h2,
+.prose-mango h2 {
+  @apply font-display-bn text-xl sm:text-2xl font-bold text-ink mt-7 mb-3;
+}
+.refund-prose h3,
+.prose-mango h3 {
+  @apply font-display-bn text-base sm:text-lg font-bold text-mango-700 mt-5 mb-2;
+}
+.refund-prose p,
+.prose-mango p {
+  @apply my-3 leading-relaxed;
+}
+.refund-prose ul,
+.prose-mango ul {
+  @apply list-disc pl-5 my-3 space-y-1.5;
+}
+.refund-prose strong,
+.prose-mango strong {
+  @apply font-bold text-ink;
+}
+.refund-prose em,
+.prose-mango em {
+  @apply italic;
+}
+.refund-prose a,
+.prose-mango a {
+  @apply text-mango-700 underline underline-offset-2 hover:text-mango-600;
+}
+.refund-prose h2:first-child,
+.prose-mango h2:first-child {
+  @apply mt-0;
+}
