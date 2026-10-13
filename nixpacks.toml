@@ -1,0 +1,14 @@
+# Railway / Nixpacks configuration for Next.js 14
+# Pins a stable Node.js 20 LTS so production builds are reproducible.
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci --no-audit --prefer-offline"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
