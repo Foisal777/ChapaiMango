@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
+import { safeNextPath } from "@/lib/utils";
 
 export const metadata = {
   title: "লগইন — Chapai Mango House",
@@ -21,7 +22,7 @@ export default async function CustomerLoginPage({
   const configured = isSupabaseConfigured();
   if (configured) {
     const user = await getCurrentUser();
-    if (user) redirect(searchParams.next || "/orders");
+    if (user) redirect(safeNextPath(searchParams.next, "/orders"));
   }
 
   return (
@@ -62,7 +63,9 @@ export default async function CustomerLoginPage({
           {d.auth.newUser}{" "}
           <Link
             href={`/signup${
-              searchParams.next ? `?next=${searchParams.next}` : ""
+              searchParams.next
+                ? `?next=${encodeURIComponent(safeNextPath(searchParams.next, "/orders"))}`
+                : ""
             }`}
             className="font-semibold text-mango-700 hover:underline"
           >

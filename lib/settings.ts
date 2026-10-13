@@ -16,7 +16,7 @@
  * stay statically cacheable.
  */
 import { unstable_cache } from "next/cache";
-import { createClient } from "@supabase/supabase-js";
+import { createPublicClient } from "@/lib/supabase/public";
 import { SITE } from "@/lib/site";
 import {
   mergeSettings,
@@ -158,13 +158,9 @@ export function envDefaultSettings(): SiteSettings {
 /** Reads the single `site_settings` row. Returns null on any failure so
  *  the storefront always falls back to env / defaults. */
 async function fetchStoredSettings(): Promise<unknown> {
-  const url = env("NEXT_PUBLIC_SUPABASE_URL");
-  const key = env("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-  if (!url || !key || url.includes("YOUR-PROJECT")) return null;
+  const supabase = createPublicClient();
+  if (!supabase) return null;
   try {
-    const supabase = createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false }
-    });
     const { data, error } = await supabase
       .from("site_settings")
       .select("data")
