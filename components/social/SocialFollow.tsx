@@ -1,5 +1,7 @@
 import { Facebook } from "lucide-react";
 import { getSiteSettings } from "@/lib/settings";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 function TikTokIcon({ className }: { className?: string }) {
   return (
@@ -20,6 +22,7 @@ function TikTokIcon({ className }: { className?: string }) {
  * the footer but blown up so customers actually notice them.
  */
 export default async function SocialFollow() {
+  const d = getDictionary(getLocale());
   const { social } = await getSiteSettings();
   const facebookUrl = social.facebook;
   const tiktokUrl = social.tiktok;
@@ -28,14 +31,13 @@ export default async function SocialFollow() {
     <section className="container-x py-12">
       <div className="glass rounded-3xl p-8 sm:p-10 text-center">
         <p className="text-sm font-semibold text-mango-600 mb-2">
-          ━ আমাদের সাথে থাকুন
+          {d.home.socialKicker}
         </p>
         <h2 className="font-display-bn text-2xl sm:text-3xl md:text-4xl font-bold text-ink leading-tight">
-          মৌসুমের প্রতিটা <span className="shimmer-text">আপডেট</span> পান
+          {d.home.socialTitleA} <span className="shimmer-text">{d.home.socialTitleB}</span> {d.home.socialTitleC}
         </h2>
         <p className="mt-3 text-sm sm:text-base text-ink/65 max-w-xl mx-auto">
-          নতুন আম এলে, কোন জাত পাওয়া যাচ্ছে, ডেলিভারি কেমন চলছে — সব
-          ভিডিও আর ছবিতে দেখুন আমাদের সোশ্যাল চ্যানেলে।
+{d.home.socialDesc}
         </p>
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
@@ -43,21 +45,21 @@ export default async function SocialFollow() {
             href={facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Facebook এ ফলো করুন"
+            aria-label="Facebook"
             className="inline-flex items-center gap-3 rounded-full bg-[#1877F2] px-6 py-3.5 text-base font-bold text-white shadow-soft hover:scale-105 hover:shadow-glow transition"
           >
             <Facebook className="h-6 w-6 fill-white" />
-            <span>Facebook ফলো করুন</span>
+            <span>{d.home.followFacebook}</span>
           </a>
           <a
             href={tiktokUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="TikTok এ ফলো করুন"
+            aria-label="TikTok"
             className="inline-flex items-center gap-3 rounded-full bg-ink px-6 py-3.5 text-base font-bold text-white shadow-soft hover:scale-105 hover:shadow-glow transition"
           >
             <TikTokIcon className="h-6 w-6" />
-            <span>TikTok ফলো করুন</span>
+            <span>{d.home.followTikTok}</span>
           </a>
         </div>
       </div>

@@ -1,58 +1,43 @@
 import PaymentBrandLogo from "@/components/payment/PaymentBrandLogo";
-import { isPaymentMethodEnabled } from "@/lib/config";
+import { paymentMethodInfo } from "@/lib/config";
 import { getSiteSettings } from "@/lib/settings";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 import type { PaymentMethod } from "@/types";
 
 /**
- * "We Accept" payment-method strip in the footer.
- *
- * Renders the operator-enabled methods (NEXT_PUBLIC_PAYMENT_METHODS)
- * in the order requested:
- *
- *   bKash → Nagad → Rocket → Upay → Bank
- *
- * COD is intentionally NOT shown in this strip because it isn't
- * a third-party brand the customer needs to "recognise" before
- * trusting the checkout — they already know cash on delivery is an
- * option from the product card. The brand pills here are the
- * trust-builders for online-payment customers who need to see "this
- * shop accepts the payment rail I use".
- *
+ * "We Accept" strip in the footer. Shows built-in methods the admin
+ * enabled (in brand order) followed by admin-created custom methods
+ * whose "footer-এ দেখান" toggle is on. Any logo uploaded in
+ * Settings → Payments (গ্যালারি থেকে) replaces the default pill.
+ * COD is intentionally excluded — it isn't a brand trust signal.
  * Server component, zero JS shipped.
  */
-
-// Hard-coded display order, independent of config.paymentMethods (which
-// is what the user can hide entries from but doesn't control display
-// order). Filtering against config.paymentMethods means turning off,
-// say, "rocket" via env hides the Rocket pill but leaves the order
-// intact for the rest.
-const DISPLAY_ORDER: PaymentMethod[] = [
-  "bkash",
-  "nagad",
-  "rocket",
-  "upay",
-  "bank"
-];
+const DISPLAY_ORDER: PaymentMethod[] = ["bkash", "nagad", "rocket", "upay", "bank"];
 
 export default async function AcceptedPayments() {
   const { payments } = await getSiteSettings();
-  const visible = DISPLAY_ORDER.filter((m) =>
-    isPaymentMethodEnabled(payments, m)
-  );
-
+  const d = getDictionary(getLocale());
+  const builtins = DISPLAY_ORDER.filter((m) => payments.methods[m]?.enabled).map((code) => {
+    const info = paymentMethodInfo(payments, code);
+    return { code, label: info.label, logoUrl: info.logoUrl };
+  });
+  const customs = (payments.customMethods ?? [])
+    .filter((m) => m.enabled && m.showInFooter)
+    .map((m) => ({ code: m.code, label: m.label, logoUrl: m.logoUrl || undefined }));
+  const visible = [...builtins, ...customs];
   if (visible.length === 0) return null;
 
   return (
     <div className="border-t border-mango-200/50">
       <div className="container-x py-7 flex flex-col items-center gap-4">
-        <p className="text-xs uppercase tracking-wider text-ink/55 font-bold">
-          We Accept
-        </p>
+        <p className="text-xs uppercase tracking-[0.2em] text-ink/55 font-bold">{d.footer.weAccept}</p>
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-          {visible.map((code) => (
-            <PaymentBrandLogo key={code} code={code} size="md" />
+          {visible.map((m) => (
+            <PaymentBrandLogo key={m.code} code={m.code} label={m.label} logoUrl={m.logoUrl} size="md" />
           ))}
         </div>
+        <p className="text-[11px] text-ink/45">{d.footer.secureNote}</p>
       </div>
     </div>
   );

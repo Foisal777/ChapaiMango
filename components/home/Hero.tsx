@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Award, Sparkles } from "lucide-react";
 import HeroSlider from "./HeroSlider";
 import { useSettings } from "@/components/providers/SettingsProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { num } from "@/lib/i18n";
 
 // Three.js + react-three-fiber + drei together are ~150KB of JS to parse,
 // plus a continuous animation loop. On low-end Android phones this is the
@@ -20,7 +22,9 @@ const Scene = dynamic(() => import("@/components/3d/Scene"), {
 
 export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
   const { home } = useSettings();
-  const [titleFirst, ...titleRest] = home.heroTitle.split(" ");
+  const { locale, t: d } = useLocale();
+  const en = locale === "en";
+  const [titleFirst, ...titleRest] = (en ? `${d.hero.titleFirst} ${d.hero.titleRest}` : home.heroTitle).split(" ");
   const [showScene, setShowScene] = useState(false);
   const hasImages = heroImages.length > 0;
 
@@ -86,7 +90,7 @@ export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
         <div className="text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-xs font-semibold text-mango-700 mb-6">
             <Sparkles className="h-3.5 w-3.5" />
-            {home.heroBadge}
+            {en ? d.hero.badge : home.heroBadge}
           </span>
 
           <h1 className="font-display-bn text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-ink">
@@ -95,26 +99,26 @@ export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-ink/70 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            {home.heroSubtitle}
+            {en ? d.hero.subtitle : home.heroSubtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-4">
             <Link href="/products" className="btn-primary">
-              এখনই অর্ডার করুন <ArrowRight className="h-4 w-4" />
+              {d.hero.orderNow} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link href="/about" className="btn-ghost">
-              আমাদের গল্প
+              {d.hero.ourStory}
             </Link>
           </div>
 
           <div className="mt-10 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0">
             <Stat
               icon={<Award className="h-5 w-5" />}
-              value="৬+"
-              label="আমের জাত"
+              value={en ? "6+" : "৬+"}
+              label={d.hero.varieties}
             />
-            <Stat value="১০০%" label="কেমিক্যাল-মুক্ত" />
-            <Stat value="৬৪" label="জেলায় ডেলিভারি" />
+            <Stat value={en ? "100%" : "১০০%"} label={d.hero.chemicalFree} />
+            <Stat value={en ? "64" : "৬৪"} label={d.hero.districts} />
           </div>
         </div>
 
@@ -142,7 +146,7 @@ export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
             </>
           )}
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-5 py-2 text-xs font-medium text-ink/80 whitespace-nowrap z-10">
-            ১০০% গাছপাকা · কেমিক্যাল-মুক্ত
+            {d.hero.treeRipe}
           </div>
         </div>
       </div>

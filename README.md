@@ -471,3 +471,61 @@ Tweak the messages by editing the `PROMO_MESSAGES` / `HIGHLIGHTS` arrays at the 
 Footer carries a clickable credit:
 
 > Developed by [MD FOISAL IQBAL](https://www.facebook.com/foysal.iqbal.359)
+
+---
+
+## 🆕 Gallery uploads, custom payments, CMH tracking & performance
+
+### ⚠️ One-time database update (required for CMH ids + gallery storage)
+Supabase → **SQL Editor** → paste & run [`supabase/cmh-tracking-and-storage.sql`](./supabase/cmh-tracking-and-storage.sql) once. It:
+- adds `orders.tracking_id` (`CMH-XXXXXX`) with a trigger + backfills every existing order,
+- upgrades/creates the tracking RPCs used by `/track`,
+- creates the public Storage bucket **`site-images`** for gallery uploads.
+
+Checkout keeps working even before this runs (it falls back to inserting without `tracking_id`), but CMH tracking search needs the RPC from this file.
+
+### 📸 Product photos straight from the gallery
+**Admin → Products → Add/Edit** — "গ্যালারি থেকে ছবি বেছে নিন" opens the phone/computer gallery (multi-select + drag & drop). Photos are compressed (max 1400px), uploaded to `site-images`, first photo = cover (star any photo to make it cover). Pasting a URL still works as a fallback. If the bucket doesn't exist yet, the compressed photo is stored inline so the flow never blocks.
+
+### 💳 New payment methods + logos (no code / no deploy)
+**Admin → Settings → Payments**:
+- Every built-in method (bKash/Nagad/Rocket/Upay/Bank/COD) can take a **logo from the gallery** — it replaces the default pill on checkout *and* in the footer **"We Accept"** strip.
+- **"নতুন Payment Method যোগ করুন"** creates a custom method (name, auto code, receiving number, advance, instructions, gallery logo, "footer-এ দেখান" toggle). Saving makes it live on checkout immediately; the code is stored in `orders.payment_method`.
+
+### 🔎 Short branded tracking id — `CMH-XXXXXX`
+Every order now shows a short id like **CMH-7K3QX9** (checkout success screen, /orders, admin orders, /track) instead of the 36-char UUID. Customers track with **CMH id + phone**; old UUIDs still work.
+
+### 🎞️ Animation & UI/UX
+CSS-only (no JS library added): page transition on every navigation (keyed by route), top scroll-progress bar, reveal variants (`up/left/right/scale/blur`), button shine, nav underline sweep, product-card shine + lift, payment-card hover lift, marquee pause-on-hover — all honouring `prefers-reduced-motion`.
+
+### ⚡ Checkout bundle
+`/checkout` no longer ships react-hook-form/zod or the Supabase client in first load (validation is hand-written; Supabase is lazy-`import()`-ed). Measured build: **~134 kB first load** (was ~207 kB).
+
+### 🔍 SEO — honest next steps (ranking can't be guaranteed)
+Technical SEO is in place (metadata, JSON-LD, sitemap, robots). To get indexed:
+1. Google Search Console → add property → paste the verification token in **Admin → Settings → SEO**.
+2. Search Console → **Sitemaps** → submit `sitemap.xml` (`https://<your-domain>/sitemap.xml`).
+3. Keep adding real content regularly (product descriptions, seasonal posts) — ranking depends on content + backlinks + time, so no one can honestly guarantee a position.
+
+### 🌐 Bangla / English language switch
+Users can switch the whole storefront between **বাংলা** and **English** from the
+**বাংলা | EN** toggle in the navbar (mobile: inside the menu / header).
+
+- Default language: **Bangla**. The choice is saved in a `cm-locale` cookie
+  (1 year) + `localStorage`, so it survives reloads and applies on every page.
+- Switching refreshes the route: **server components re-render in the chosen
+  language too**, and `<html lang>` updates (`bn` / `en`) for SEO/accessibility.
+- Implementation: one shared dictionary in `lib/i18n.ts` (typed, functions for
+  interpolated strings like "3 products found"), `lib/i18n-server.ts` reads the
+  cookie on the server, `components/providers/LocaleProvider.tsx` provides
+  `useLocale()` (`{ locale, t, setLocale }`) to client components.
+- Covered: navbar/footer, home (hero, featured, why-us, testimonials, CTA,
+  social), shop + filters, product cards/detail, cart, checkout (labels,
+  validation errors, toasts, success screen), order tracking, contact,
+  about/team, login/signup, my-orders and reviews.
+- **Not translated (by design):** operator content — product names &
+  descriptions, hero text saved in Admin → Settings, team bios, refund/privacy
+  policy bodies. Those always show exactly what the admin entered. To reach
+  English-speaking customers fully, enter English product copy or extend
+  `lib/i18n.ts` (add a key to both `bn` and `en` objects — TypeScript enforces
+  that both exist).

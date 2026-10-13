@@ -8,8 +8,10 @@ import { useCart } from "@/store/cart-store";
 import { formatBDT } from "@/lib/utils";
 import { useSettings } from "@/components/providers/SettingsProvider";
 import type { Mango } from "@/types";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 export default function AddToCartControl({ product }: { product: Mango }) {
+  const { locale, t: d } = useLocale();
   // Default to the configured minimum order so a one-product purchase
   // already satisfies the cart-level requirement.
   const { commerce } = useSettings();
@@ -30,7 +32,7 @@ export default function AddToCartControl({ product }: { product: Mango }) {
 
   const handleAdd = () => {
     add(buildCartItem());
-    toast.success(`${qty} কেজি ${product.name} কার্টে যোগ হয়েছে`);
+    toast.success(d.product.addedToast(qty, product.name, locale));
   };
 
   /** "Buy Now" — add to cart and go straight to checkout. */
@@ -45,13 +47,13 @@ export default function AddToCartControl({ product }: { product: Mango }) {
     <div className="space-y-5">
       <div>
         <label className="block text-xs font-semibold text-ink/60 mb-2 uppercase tracking-wider">
-          পরিমাণ (কেজি)
+          {d.product.qty}
         </label>
         <div className="inline-flex items-center gap-3 rounded-full border-2 border-mango-300 bg-white p-1.5">
           <button
             onClick={() => setQty((q) => Math.max(1, q - 1))}
             className="grid place-items-center h-10 w-10 rounded-full hover:bg-mango-100 transition"
-            aria-label="কমান"
+            aria-label={d.product.decrease}
           >
             <Minus className="h-4 w-4" />
           </button>
@@ -65,7 +67,7 @@ export default function AddToCartControl({ product }: { product: Mango }) {
           <button
             onClick={() => setQty((q) => q + 1)}
             className="grid place-items-center h-10 w-10 rounded-full hover:bg-mango-100 transition"
-            aria-label="বাড়ান"
+            aria-label={d.product.increase}
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -73,13 +75,13 @@ export default function AddToCartControl({ product }: { product: Mango }) {
         {commerce.minOrderKg > 0 && (
           <p className="mt-2 text-[11px] text-ink/55 inline-flex items-center gap-1">
             <Info className="h-3 w-3" />
-            ন্যূনতম অর্ডার (কার্টে মোট) {commerce.minOrderKg} কেজি।
+            {d.product.minOrder(commerce.minOrderKg, locale)}
           </p>
         )}
       </div>
 
       <div className="glass rounded-2xl p-4 flex items-center justify-between">
-        <span className="text-sm text-ink/70">মোট</span>
+        <span className="text-sm text-ink/70">{d.common.total}</span>
         <span className="font-display-bn text-2xl font-bold text-mango-700">
           {formatBDT(total)}
         </span>
@@ -87,7 +89,7 @@ export default function AddToCartControl({ product }: { product: Mango }) {
 
       <button onClick={handleAdd} className="btn-primary w-full text-base py-4">
         <ShoppingBag className="h-5 w-5" />
-        কার্টে যোগ করুন
+        {d.product.addToCart}
       </button>
 
       <button
@@ -95,7 +97,7 @@ export default function AddToCartControl({ product }: { product: Mango }) {
         className="w-full inline-flex items-center justify-center gap-2 rounded-full border-2 border-mango-500 bg-mango-50 px-6 py-4 text-base font-semibold text-mango-700 shadow-soft transition-all hover:bg-mango-100 hover:scale-[1.02] active:scale-95"
       >
         <Zap className="h-5 w-5" />
-        এখনই কিনুন
+        {d.product.buyNow}
       </button>
     </div>
   );

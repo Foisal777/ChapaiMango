@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import TrackingForm from "@/components/tracking/TrackingForm";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata: Metadata = {
   title: "অর্ডার ট্র্যাক করুন",
@@ -11,19 +13,18 @@ export const metadata: Metadata = {
 };
 
 export default function TrackPage() {
+  const d = getDictionary(getLocale());
   return (
     <section className="container-x pt-10 pb-20 max-w-3xl">
       <div className="mb-8">
         <p className="text-sm font-semibold text-mango-600 mb-2">
-          ━ ডেলিভারি ট্র্যাকিং
+          {d.track.kicker}
         </p>
         <h1 className="section-title">
-          অর্ডার <span className="shimmer-text">ট্র্যাক</span> করুন
+          {d.track.titleA} <span className="shimmer-text">{d.track.titleB}</span> {d.track.titleC}
         </h1>
         <p className="mt-3 text-sm text-ink/60 max-w-xl">
-          অর্ডার কনফার্মেশনে পাওয়া অর্ডার আইডি এবং অর্ডার করার সময় যে ফোন
-          নম্বর দিয়েছিলেন সেটা দিয়ে এখনই অবস্থা দেখুন। সাইন ইন না করেও কাজ
-          করবে।
+{d.track.intro}
         </p>
       </div>
       <TrackingForm />

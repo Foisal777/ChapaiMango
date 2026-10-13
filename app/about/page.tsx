@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Award, Leaf, Users, TreePine } from "lucide-react";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata = {
   title: "আমাদের সম্পর্কে — Chapai Mango House",
@@ -8,37 +10,13 @@ export const metadata = {
     "চাঁপাইনবাবগঞ্জের আমের ঐতিহ্য, আমাদের বাগান, ও আমাদের গল্প।"
 };
 
-const TIMELINE = [
-  {
-    year: "১৯৮৫",
-    title: "পারিবারিক বাগানের সূচনা",
-    desc: "আমাদের দাদা চাঁপাইনবাবগঞ্জে প্রথম ৫০টি আম গাছ রোপণ করেন।"
-  },
-  {
-    year: "২০১০",
-    title: "জৈব চাষে পূর্ণ যাত্রা",
-    desc: "কেমিক্যাল-মুক্ত চাষে বিশেষ ফোকাস — কীটনাশক বন্ধ।"
-  },
-  {
-    year: "২০১৮",
-    title: "ক্ষীরসাপাতের GI ট্যাগ",
-    desc: "চাঁপাই ক্ষীরসাপাত Geographical Indication-এ নিবন্ধিত হয়।"
-  },
-  {
-    year: "২০২৪",
-    title: "অনলাইন যাত্রা শুরু",
-    desc: "Chapai Mango House — সারা বাংলাদেশে হোম ডেলিভারি শুরু।"
-  }
-];
 
-const STATS = [
-  { icon: TreePine, value: "৫০০+", label: "আম গাছ" },
-  { icon: Leaf, value: "০%", label: "কেমিক্যাল ব্যবহার" },
-  { icon: Users, value: "১২হাজার+", label: "সন্তুষ্ট গ্রাহক" },
-  { icon: Award, value: "GI", label: "ট্যাগ সার্টিফায়েড" }
-];
+const STAT_ICONS = [TreePine, Leaf, Users, Award];
 
 export default function AboutPage() {
+  const d = getDictionary(getLocale());
+  const TIMELINE = d.about.timeline;
+  const STATS = d.about.stats.map((s, i) => ({ icon: STAT_ICONS[i], ...s }));
   return (
     <>
       {/* Hero */}
@@ -46,24 +24,20 @@ export default function AboutPage() {
         <div className="container-x py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-sm font-semibold text-mango-600 mb-2">
-              ━ আমাদের গল্প
+              {d.about.kicker}
             </p>
             <h1 className="font-display-bn text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-              তিন <span className="shimmer-text">প্রজন্মের</span> বাগান, <br />
-              একটিই প্রতিশ্রুতি — <br />
-              <span className="text-mango-700">খাঁটি আম।</span>
+              {d.about.titleA} <span className="shimmer-text">{d.about.titleB}</span> {d.about.titleC} <br />
+              <span className="text-mango-700">{d.about.titleD}</span>
             </h1>
             <p className="mt-6 text-ink/70 text-base sm:text-lg leading-relaxed max-w-xl">
-              চাঁপাইনবাবগঞ্জ — বাংলাদেশের আমের রাজধানী। আমাদের পরিবার ১৯৮৫ সাল
-              থেকে নিজামপুর, নাচোলে আম চাষ করে আসছে। আজ আমরা সেই ঐতিহ্যকে
-              অনলাইনে নিয়ে এসেছি, যাতে আপনিও পেতে পারেন গাছপাকা, কেমিক্যাল-মুক্ত
-              চাঁপাইনবাবগঞ্জের আম।
+{d.about.intro}
             </p>
           </div>
           <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-soft">
             <Image
               src="https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=1200"
-              alt="চাঁপাইনবাবগঞ্জের আম বাগান"
+              alt={d.about.orchard}
               fill
               className="object-cover"
               priority
@@ -71,7 +45,7 @@ export default function AboutPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent" />
             <div className="absolute bottom-5 left-5 right-5 glass rounded-2xl p-4">
               <div className="text-xs uppercase tracking-widest text-mango-700 font-semibold">
-                বাগান
+                {d.about.orchard}
               </div>
               <div className="font-display-bn text-base sm:text-lg font-bold">
                 নিজামপুর, নাচোল, চাঁপাইনবাবগঞ্জ
@@ -101,9 +75,9 @@ export default function AboutPage() {
       {/* Timeline */}
       <section className="container-x py-16">
         <div className="text-center mb-12 max-w-2xl mx-auto">
-          <p className="text-sm font-semibold text-mango-600 mb-2">━ যাত্রা</p>
+          <p className="text-sm font-semibold text-mango-600 mb-2">━ {d.aboutExtra.journey}</p>
           <h2 className="section-title">
-            আমাদের <span className="shimmer-text">পথচলা</span>
+            {d.aboutExtra.journeyTitleA} <span className="shimmer-text">{d.aboutExtra.journeyTitleB}</span>
           </h2>
         </div>
         <div className="relative">
@@ -142,14 +116,13 @@ export default function AboutPage() {
             🌿
           </div>
           <h2 className="relative font-display-bn text-2xl sm:text-3xl md:text-4xl font-bold text-ink max-w-2xl mx-auto leading-tight">
-            আমাদের প্রতিশ্রুতি — আপনার পরিবারের জন্য খাঁটি চাঁপাইয়ের আম, প্রথম
-            দিন থেকে শেষ দিন পর্যন্ত।
+{d.aboutExtra.promise}
           </h2>
           <Link
             href="/products"
             className="relative mt-6 inline-flex btn-ghost bg-white/40"
           >
-            শপ দেখুন
+            {d.aboutExtra.browseShop}
           </Link>
         </div>
       </section>

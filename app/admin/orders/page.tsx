@@ -93,6 +93,11 @@ export default async function AdminOrdersPage({
                       <div className="font-semibold text-ink">
                         {o.customer_name}
                       </div>
+                      {(o as { tracking_id?: string | null }).tracking_id && (
+                        <div className="font-mono text-[11px] font-bold tracking-widest text-mango-700">
+                          {(o as { tracking_id?: string | null }).tracking_id}
+                        </div>
+                      )}
                       <div className="text-xs text-ink/50">
                         {o.phone} · {o.district}
                       </div>

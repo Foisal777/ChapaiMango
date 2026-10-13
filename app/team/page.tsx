@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Facebook, Mail, Phone, Users } from "lucide-react";
 import { getActiveTeamMembers } from "@/lib/data";
 import type { TeamMember, TeamMemberRole } from "@/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata = {
   title: "আমাদের টিম — Chapai Mango House",
@@ -15,29 +17,15 @@ export const revalidate = 60;
 
 const ROLE_ORDER: TeamMemberRole[] = ["founder", "supplier", "member"];
 
-const ROLE_META: Record<
-  TeamMemberRole,
-  { heading: string; subheading: string; emoji: string }
-> = {
-  founder: {
-    heading: "প্রতিষ্ঠাতা",
-    subheading: "যাঁদের স্বপ্নে গড়ে উঠেছে Chapai Mango House",
-    emoji: "🌟"
-  },
-  supplier: {
-    heading: "আমাদের সরবরাহকারী",
-    subheading:
-      "চাঁপাইনবাবগঞ্জের অভিজ্ঞ চাষি ও বাগান অংশীদার — খাঁটি আমের প্রকৃত উৎস",
-    emoji: "🌳"
-  },
-  member: {
-    heading: "টিম সদস্য",
-    subheading: "প্যাকেজিং, ডেলিভারি ও কাস্টমার কেয়ার দলের পরিচিত মুখগুলো",
-    emoji: "🤝"
-  }
-};
+const ROLE_EMOJI: Record<TeamMemberRole, string> = { founder: "🌟", supplier: "🌳", member: "🤝" };
 
 export default async function TeamPage() {
+  const d = getDictionary(getLocale());
+  const ROLE_META: Record<TeamMemberRole, { heading: string; subheading: string; emoji: string }> = {
+    founder: { ...d.team.roles.founder, emoji: ROLE_EMOJI.founder },
+    supplier: { ...d.team.roles.supplier, emoji: ROLE_EMOJI.supplier },
+    member: { ...d.team.roles.member, emoji: ROLE_EMOJI.member }
+  };
   const members = await getActiveTeamMembers();
 
   // Group by role so each section is rendered together.
@@ -52,15 +40,13 @@ export default async function TeamPage() {
       <section className="bg-hero-radial">
         <div className="container-x py-16 text-center max-w-3xl mx-auto">
           <p className="text-sm font-semibold text-mango-600 mb-2">
-            ━ আমাদের টিম
+            {d.team.kicker}
           </p>
           <h1 className="font-display-bn text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-            যাদের হাতে <span className="shimmer-text">গড়ে ওঠে</span> খাঁটি আম
+            {d.team.titleA} <span className="shimmer-text">{d.team.titleB}</span> {d.team.titleC}
           </h1>
           <p className="mt-5 text-ink/70 text-base sm:text-lg">
-            প্রতিষ্ঠাতা থেকে শুরু করে বাগানের চাষি, প্যাকেজিং দল আর ডেলিভারি
-            টিম — প্রত্যেকের পরিশ্রমেই আপনার দরজায় পৌঁছায় চাঁপাইনবাবগঞ্জের
-            সেরা আম।
+{d.team.subtitle}
           </p>
         </div>
       </section>
@@ -70,10 +56,10 @@ export default async function TeamPage() {
         <section className="container-x py-20 text-center">
           <Users className="h-14 w-14 mx-auto text-mango-400" />
           <p className="mt-3 font-display-bn text-lg">
-            টিম তথ্য এখনো যোগ করা হয়নি
+            {d.team.empty}
           </p>
           <p className="text-sm text-ink/50 mt-1">
-            শীঘ্রই আমাদের পরিবার সম্পর্কে জানতে পারবেন।
+            {d.aboutExtra.soon}
           </p>
         </section>
       ) : (
@@ -84,19 +70,7 @@ export default async function TeamPage() {
                 ━ {ROLE_META[role].emoji} {ROLE_META[role].heading}
               </p>
               <h2 className="section-title">
-                {role === "founder" ? (
-                  <>
-                    আমাদের <span className="shimmer-text">প্রতিষ্ঠাতা</span>
-                  </>
-                ) : role === "supplier" ? (
-                  <>
-                    বাগান <span className="shimmer-text">অংশীদার</span>
-                  </>
-                ) : (
-                  <>
-                    টিম <span className="shimmer-text">সদস্য</span>
-                  </>
-                )}
+<span className="shimmer-text">{ROLE_META[role].heading}</span>
               </h2>
               <p className="mt-3 text-sm text-ink/60">
                 {ROLE_META[role].subheading}
@@ -122,13 +96,13 @@ export default async function TeamPage() {
             🌿
           </div>
           <h2 className="relative font-display-bn text-2xl sm:text-3xl md:text-4xl font-bold text-ink max-w-2xl mx-auto leading-tight">
-            আমাদের পরিবারের অংশ হয়ে চাখুন চাঁপাইয়ের সেরা আম।
+            {d.aboutExtra.joinFamily}
           </h2>
           <Link
             href="/products"
             className="relative mt-6 inline-flex btn-ghost bg-white/40"
           >
-            শপ দেখুন
+            {d.aboutExtra.browseShopTeam}
           </Link>
         </div>
       </section>

@@ -3,7 +3,10 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { LogoUploadField } from "@/components/admin/ImageUploadField";
+import PaymentBrandLogo from "@/components/payment/PaymentBrandLogo";
+import { slugify } from "@/lib/utils";
 import { saveSiteSettingsAction } from "@/app/admin/actions";
 import {
   PAYMENT_METHOD_CODES,
@@ -74,6 +77,44 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
           [code]: { ...prev.payments.methods[code], [field]: value }
         }
       }
+    }));
+  }
+
+  function patchCustom(index: number, field: string, value: unknown) {
+    setDirty(true);
+    setS((prev) => ({
+      ...prev,
+      payments: {
+        ...prev.payments,
+        customMethods: (prev.payments.customMethods ?? []).map((m, i) =>
+          i === index ? { ...m, [field]: value } : m
+        )
+      }
+    }));
+  }
+
+  function addCustomMethod() {
+    setDirty(true);
+    setS((prev) => {
+      const n = (prev.payments.customMethods ?? []).length + 1;
+      return {
+        ...prev,
+        payments: {
+          ...prev.payments,
+          customMethods: [
+            ...(prev.payments.customMethods ?? []),
+            { code: `method-${n}`, label: "", enabled: true, number: "", advance: 0, instructions: "", logoUrl: "", showInFooter: true }
+          ]
+        }
+      };
+    });
+  }
+
+  function removeCustomMethod(index: number) {
+    setDirty(true);
+    setS((prev) => ({
+      ...prev,
+      payments: { ...prev.payments, customMethods: (prev.payments.customMethods ?? []).filter((_, i) => i !== index) }
     }));
   }
 
@@ -217,9 +258,76 @@ export default function SettingsForm({ initial }: { initial: SiteSettings }) {
                       <Field label="Custom instructions (blank = default text)">
                         <textarea rows={2} className="input-field" value={m.instructions} onChange={(e) => patchMethod(code, "instructions", e.target.value)} />
                       </Field>
+                      <Field label="লোগো (footer 'We Accept' + checkout-এ দেখাবে)" hint="গ্যালারি থেকে লোগো বেছে নিন — না দিলে ডিফল্ট রঙিন pill দেখাবে">
+                        <LogoUploadField value={m.logoUrl || ""} onChange={(u) => patchMethod(code, "logoUrl", u)} folder="payments" />
+                      </Field>
+                      <div className="flex items-center gap-2 text-xs text-ink/55">
+                        <span>Preview:</span>
+                        <PaymentBrandLogo code={code} label={METHOD_LABEL[code]} logoUrl={m.logoUrl || undefined} size="sm" />
+                      </div>
                     </div>
                   );
                 })}
+              </div>
+
+              {/* ── Custom payment methods (admin-added, no deploy) ── */}
+              <div className="rounded-2xl border-2 border-dashed border-mango-300 p-4 space-y-4 mt-2">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <h3 className="font-display font-bold text-sm">নতুন Payment Method যোগ করুন</h3>
+                    <p className="text-xs text-ink/55 mt-1">নতুন wallet/gateway এখান থেকে যোগ করলেই checkout-এ live হবে — কোড/deploy লাগবে না। লোগো গ্যালারি থেকে বেছে দিলে footer-এর &ldquo;We Accept&rdquo;-এও দেখাবে।</p>
+                  </div>
+                  <button type="button" onClick={addCustomMethod} className="btn-primary text-xs py-2 px-4 shrink-0">
+                    <Plus className="h-4 w-4" /> নতুন Method
+                  </button>
+                </div>
+                {(s.payments.customMethods ?? []).length === 0 ? (
+                  <p className="text-xs text-ink/45 rounded-xl bg-mango-50 px-3 py-2.5">এখনো কোনো custom method নেই — উপরের বাটনে ক্লিক করে যোগ করুন।</p>
+                ) : (
+                  (s.payments.customMethods ?? []).map((m, i) => (
+                    <div key={i} className={`rounded-2xl border p-4 space-y-3 ${m.enabled ? "border-mango-300 bg-white/60" : "border-ink/10 bg-ink/[0.02] opacity-70"}`}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <label className="inline-flex items-center gap-2 text-sm font-semibold cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 accent-[#f59e0b]" checked={m.enabled} onChange={(e) => patchCustom(i, "enabled", e.target.checked)} />
+                          {m.label || "নতুন Method"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="inline-flex items-center gap-1.5 text-xs cursor-pointer">
+                            <input type="checkbox" className="h-3.5 w-3.5 accent-[#f59e0b]" checked={m.showInFooter} onChange={(e) => patchCustom(i, "showInFooter", e.target.checked)} />
+                            Footer &ldquo;We Accept&rdquo;-এ দেখান
+                          </label>
+                          <button type="button" onClick={() => removeCustomMethod(i)} className="grid h-8 w-8 place-items-center rounded-full border border-red-200 text-red-600 hover:bg-red-50" aria-label="Method মুছুন">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <Grid>
+                        <Field label="Method-এর নাম *" hint="যেমন: SSLCommerz, Pathao Pay">
+                          <input className="input-field" value={m.label} onChange={(e) => { patchCustom(i, "label", e.target.value); if (!m.code || m.code.startsWith("method-")) patchCustom(i, "code", slugify(e.target.value) || m.code); }} placeholder="SSLCommerz" />
+                        </Field>
+                        <Field label="Code (অর্ডারে সেভ হবে)" hint="ছোট হাতের, আলাদা হতে হবে">
+                          <input className="input-field font-mono text-sm" value={m.code} onChange={(e) => patchCustom(i, "code", slugify(e.target.value))} placeholder="sslcommerz" />
+                        </Field>
+                        <Field label="Receiving number / account">
+                          <input className="input-field" value={m.number} onChange={(e) => patchCustom(i, "number", e.target.value)} placeholder="01XXXXXXXXX" />
+                        </Field>
+                        <Field label="Advance due now (৳)" hint="0 = পুরো টাকা এখনই (COD ছাড়া)">
+                          <input className="input-field" type="number" min={0} value={m.advance} onChange={(e) => patchCustom(i, "advance", Number(e.target.value))} />
+                        </Field>
+                      </Grid>
+                      <Field label="Customer instructions">
+                        <textarea rows={2} className="input-field" value={m.instructions} onChange={(e) => patchCustom(i, "instructions", e.target.value)} placeholder="কীভাবে পেমেন্ট করবে লিখুন…" />
+                      </Field>
+                      <Field label="লোগো (গ্যালারি থেকে)">
+                        <LogoUploadField value={m.logoUrl || ""} onChange={(u) => patchCustom(i, "logoUrl", u)} folder="payments" />
+                      </Field>
+                      <div className="flex items-center gap-2 text-xs text-ink/55">
+                        <span>Preview:</span>
+                        <PaymentBrandLogo code={m.code} label={m.label || "Method"} logoUrl={m.logoUrl || undefined} size="sm" />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="rounded-2xl border border-mango-200 p-4 space-y-3 mt-2">

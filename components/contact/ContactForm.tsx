@@ -7,25 +7,24 @@ import { z } from "zod";
 import toast from "react-hot-toast";
 import { Send } from "lucide-react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { useMemo } from "react";
+import type { Dictionary } from "@/lib/i18n";
 
-const schema = z.object({
-  name: z.string().min(2, "আপনার নাম লিখুন"),
-  email: z
-    .string()
-    .email("সঠিক ইমেইল দিন")
-    .optional()
-    .or(z.literal("")),
-  phone: z
-    .string()
-    .min(10, "সঠিক ফোন নম্বর দিন")
-    .optional()
-    .or(z.literal("")),
-  message: z.string().min(10, "অন্তত ১০ অক্ষর লিখুন")
-});
+function buildSchema(d: Dictionary) {
+  return z.object({
+    name: z.string().min(2, d.checkout.errors.name),
+    email: z.string().email(d.checkout.errors.email).optional().or(z.literal("")),
+    phone: z.string().min(10, d.checkout.errors.phone).optional().or(z.literal("")),
+    message: z.string().min(10, d.contact.messagePh)
+  });
+}
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 export default function ContactForm() {
+  const { t: d } = useLocale();
+  const schema = useMemo(() => buildSchema(d), [d]);
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -47,11 +46,11 @@ export default function ContactForm() {
         });
         if (error) throw error;
       }
-      toast.success("মেসেজ পাঠিয়েছি! শীঘ্রই যোগাযোগ করব। ধন্যবাদ।");
+      toast.success(d.contact.sent);
       reset();
     } catch (err) {
       console.error(err);
-      toast.error("কিছু ভুল হয়েছে। আবার চেষ্টা করুন বা ফোন করুন।");
+      toast.error(d.contact.failed);
     } finally {
       setLoading(false);
     }
@@ -61,12 +60,12 @@ export default function ContactForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          নাম *
+          {d.contact.name}
         </label>
         <input
           {...register("name")}
           className="input-field"
-          placeholder="আপনার নাম"
+          placeholder={d.contact.namePh}
         />
         {errors.name && (
           <p className="text-xs text-red-600 mt-1">{errors.name.message}</p>
@@ -76,7 +75,7 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-            ইমেইল
+            {d.contact.email}
           </label>
           <input
             {...register("email")}
@@ -89,7 +88,7 @@ export default function ContactForm() {
         </div>
         <div>
           <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-            ফোন
+            {d.contact.phone}
           </label>
           <input
             {...register("phone")}
@@ -104,13 +103,13 @@ export default function ContactForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          মেসেজ *
+          {d.contact.message}
         </label>
         <textarea
           {...register("message")}
           rows={5}
           className="input-field"
-          placeholder="আপনার মেসেজ এখানে লিখুন..."
+          placeholder={d.contact.messagePh}
         />
         {errors.message && (
           <p className="text-xs text-red-600 mt-1">{errors.message.message}</p>
@@ -123,7 +122,7 @@ export default function ContactForm() {
         className="btn-primary w-full sm:w-auto"
       >
         <Send className="h-4 w-4" />
-        {loading ? "পাঠাচ্ছি..." : "মেসেজ পাঠান"}
+        {loading ? d.contact.sending : d.contact.send}
       </button>
     </form>
   );

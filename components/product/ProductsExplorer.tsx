@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import ProductCard from "./ProductCard";
 import type { Mango } from "@/types";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 type Sort = "featured" | "price-asc" | "price-desc" | "rating";
 
 export default function ProductsExplorer({ products }: { products: Mango[] }) {
+  const { locale, t: d } = useLocale();
   const [query, setQuery] = useState("");
   const [variety, setVariety] = useState<string>("all");
   const [sort, setSort] = useState<Sort>("featured");
@@ -49,7 +51,7 @@ export default function ProductsExplorer({ products }: { products: Mango[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="আম খুঁজুন (Himsagar, Langra...)"
+            placeholder={d.shop.searchPlaceholder}
             className="input-field pl-11"
           />
         </div>
@@ -60,7 +62,7 @@ export default function ProductsExplorer({ products }: { products: Mango[] }) {
         >
           {varieties.map((v) => (
             <option key={v} value={v}>
-              {v === "all" ? "সব জাত" : v}
+              {v === "all" ? d.shop.allVarieties : v}
             </option>
           ))}
         </select>
@@ -69,28 +71,28 @@ export default function ProductsExplorer({ products }: { products: Mango[] }) {
           onChange={(e) => setSort(e.target.value as Sort)}
           className="input-field md:col-span-3"
         >
-          <option value="featured">বিশেষ আগে</option>
-          <option value="price-asc">দাম: কম → বেশি</option>
-          <option value="price-desc">দাম: বেশি → কম</option>
-          <option value="rating">টপ রেটেড</option>
+          <option value="featured">{d.shop.sortFeatured}</option>
+          <option value="price-asc">{d.shop.sortPriceAsc}</option>
+          <option value="price-desc">{d.shop.sortPriceDesc}</option>
+          <option value="rating">{d.shop.sortRating}</option>
         </select>
       </div>
 
       <div className="text-sm text-ink/60 mb-4">
-        {filtered.length}টি পণ্য পাওয়া গেছে
+        {d.shop.found(filtered.length, locale)}
       </div>
 
       {filtered.length === 0 ? (
         <div className="glass rounded-3xl p-14 text-center">
           <div className="text-5xl mb-3">🥭</div>
           <p className="text-ink/60">
-            কিছু পাওয়া যায়নি। অন্য কীওয়ার্ড দিয়ে চেষ্টা করুন।
+            {d.shop.empty}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} locale={locale} />
           ))}
         </div>
       )}

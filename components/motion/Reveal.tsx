@@ -17,12 +17,14 @@ import { useEffect, useRef, useState } from "react";
 export default function Reveal({
   children,
   delay = 0,
-  className = ""
+  className = "",
+  variant = "up"
 }: {
   children: React.ReactNode;
   /** Extra delay in ms before the transition starts. */
   delay?: number;
   className?: string;
+  variant?: "up" | "left" | "right" | "scale" | "blur";
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -50,7 +52,7 @@ export default function Reveal({
   return (
     <div
       ref={ref}
-      className={`reveal ${visible ? "is-visible" : ""} ${className}`.trim()}
+      className={`reveal reveal-${variant} ${visible ? "is-visible" : ""} ${className}`.trim()}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}

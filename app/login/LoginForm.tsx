@@ -8,10 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 import { isValidBdPhone, normalizeBdPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 type AuthMode = "phone" | "email";
 
 export default function LoginForm() {
+  const { t: d } = useLocale();
   const search = useSearchParams();
   const next = search.get("next") || "/orders";
   const oauthError = search.get("error");
@@ -26,7 +28,7 @@ export default function LoginForm() {
   useEffect(() => {
     if (oauthError) {
       setError(oauthError);
-      toast.error("সাইন ইন করা যায়নি");
+      toast.error(d.auth.genericError);
     }
   }, [oauthError]);
 
@@ -60,14 +62,14 @@ export default function LoginForm() {
         await supabase.auth.signInWithPassword(credentials);
       if (signInError) {
         setError(signInError.message);
-        toast.error("সাইন ইন করতে পারিনি");
+        toast.error(d.auth.genericError);
         return;
       }
-      toast.success("স্বাগতম!");
+      toast.success(d.auth.welcome);
       window.location.href = next;
     } catch (err) {
       console.error(err);
-      setError("কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
+      setError(d.auth.genericError);
     } finally {
       setLoading(false);
     }
@@ -90,7 +92,7 @@ export default function LoginForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-2">
-          কী দিয়ে সাইন ইন করবেন?
+          {d.auth.howSignIn}
         </label>
         <div className="grid grid-cols-2 gap-2">
           <ModeButton
@@ -101,7 +103,7 @@ export default function LoginForm() {
               setError(null);
             }}
             icon={<Smartphone className="h-4 w-4" />}
-            label="ফোন"
+            label={d.auth.phone}
           />
           <ModeButton
             active={mode === "email"}
@@ -111,14 +113,14 @@ export default function LoginForm() {
               setError(null);
             }}
             icon={<Mail className="h-4 w-4" />}
-            label="ইমেইল"
+            label={d.auth.email}
           />
         </div>
       </div>
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          {mode === "email" ? "ইমেইল" : "ফোন নম্বর"}
+          {mode === "email" ? d.auth.email : d.auth.phoneNumber}
         </label>
         <input
           type={mode === "email" ? "email" : "tel"}
@@ -133,7 +135,7 @@ export default function LoginForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          পাসওয়ার্ড
+          {d.auth.password}
         </label>
         <input
           type="password"
@@ -156,11 +158,11 @@ export default function LoginForm() {
       <button type="submit" disabled={loading} className="btn-primary w-full">
         {loading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" /> সাইন ইন হচ্ছে...
+            <Loader2 className="h-4 w-4 animate-spin" /> {d.auth.signingIn}
           </>
         ) : (
           <>
-            <LogIn className="h-4 w-4" /> সাইন ইন
+            <LogIn className="h-4 w-4" /> {d.auth.signInBtn}
           </>
         )}
       </button>

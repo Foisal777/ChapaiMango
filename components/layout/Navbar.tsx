@@ -10,16 +10,20 @@ import { cn } from "@/lib/utils";
 import UserMenu from "./UserMenu";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { signOutCustomerAction } from "@/app/actions/auth";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import LanguageSwitcher from "./LanguageSwitcher";
 
-const NAV = [
-  { href: "/", label: "হোম" },
-  { href: "/products", label: "শপ" },
-  { href: "/about", label: "আমাদের সম্পর্কে" },
-  { href: "/team", label: "আমাদের টিম" },
-  { href: "/contact", label: "যোগাযোগ" }
-];
+
 
 export default function Navbar() {
+  const { t: d } = useLocale();
+  const NAV = [
+    { href: "/", label: d.nav.home },
+    { href: "/products", label: d.nav.shop },
+    { href: "/about", label: d.nav.about },
+    { href: "/team", label: d.nav.team },
+    { href: "/contact", label: d.nav.contact }
+  ];
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -98,8 +102,8 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative text-sm font-medium transition-colors",
-                  active ? "text-mango-700" : "text-ink/70 hover:text-mango-600"
+                  "nav-link relative text-sm font-medium transition-colors",
+                  (active ? "is-active " : "") + (active ? "text-mango-700" : "text-ink/70 hover:text-mango-600")
                 )}
               >
                 {item.label}
@@ -112,12 +116,13 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <span className="hidden sm:inline-flex"><LanguageSwitcher compact /></span>
           <UserMenu />
 
           <Link
             href="/cart"
             className="relative rounded-full bg-white/70 p-2.5 border border-mango-200 hover:bg-mango-100 transition"
-            aria-label="কার্ট"
+            aria-label={d.nav.cart}
           >
             <ShoppingBag className="h-5 w-5 text-mango-700" />
             {count > 0 && (
@@ -130,7 +135,7 @@ export default function Navbar() {
           <button
             onClick={() => setOpen((v) => !v)}
             className="md:hidden rounded-full bg-white/70 p-2.5 border border-mango-200"
-            aria-label="মেনু"
+            aria-label={d.nav.menu}
           >
             {open ? (
               <X className="h-5 w-5 text-mango-700" />
@@ -155,6 +160,10 @@ export default function Navbar() {
               </Link>
             ))}
 
+            <div className="py-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-ink/60">{d.nav.language}</span>
+              <LanguageSwitcher />
+            </div>
             {/* Auth section. Shown inside the hamburger so users who
                 miss the icon-only buttons next to the cart icon still
                 have a clear path to sign in / sign up / open profile. */}
@@ -167,7 +176,7 @@ export default function Navbar() {
                     className="py-3 text-base font-medium text-mango-700 inline-flex items-center gap-2"
                   >
                     <LogIn className="h-4 w-4" />
-                    সাইন ইন
+                    {d.nav.signIn}
                   </Link>
                   <Link
                     href="/signup"
@@ -175,7 +184,7 @@ export default function Navbar() {
                     className="py-3 text-base font-medium text-mango-700 inline-flex items-center gap-2"
                   >
                     <UserPlus className="h-4 w-4" />
-                    সাইন আপ
+                    {d.nav.signUp}
                   </Link>
                 </>
               ) : (
@@ -186,7 +195,7 @@ export default function Navbar() {
                     className="py-3 text-base font-medium text-ink/80 inline-flex items-center gap-2 hover:text-mango-700"
                   >
                     <Package className="h-4 w-4" />
-                    আমার অর্ডার
+                    {d.nav.myOrders}
                   </Link>
                   {isAdmin && (
                     <Link
@@ -195,7 +204,7 @@ export default function Navbar() {
                       className="py-3 text-base font-medium text-ink/80 inline-flex items-center gap-2 hover:text-mango-700"
                     >
                       <Shield className="h-4 w-4" />
-                      অ্যাডমিন প্যানেল
+                      {d.nav.adminPanel}
                     </Link>
                   )}
                   <form action={signOutCustomerAction}>
@@ -205,7 +214,7 @@ export default function Navbar() {
                       className="py-3 text-base font-medium text-red-600 inline-flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
-                      সাইন আউট
+                      {d.nav.signOut}
                     </button>
                   </form>
                 </>

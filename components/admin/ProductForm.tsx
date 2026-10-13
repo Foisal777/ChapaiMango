@@ -7,7 +7,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { Plus, Trash2, Loader2, Save, ImagePlus, ChevronLeft } from "lucide-react";
+import { Loader2, Save, ChevronLeft } from "lucide-react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import Link from "next/link";
 import { upsertProductAction, type ProductInput } from "@/app/admin/actions";
 import { slugify } from "@/lib/utils";
@@ -40,7 +41,6 @@ export default function ProductForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [images, setImages] = useState<string[]>(product?.images || []);
-  const [imageInput, setImageInput] = useState("");
 
   const {
     register,
@@ -70,21 +70,6 @@ export default function ProductForm({
 
   const autoSlug = () => {
     if (currentName) setValue("slug", slugify(currentName));
-  };
-
-  const addImage = () => {
-    const url = imageInput.trim();
-    if (!url) return;
-    if (!/^https?:\/\//i.test(url)) {
-      toast.error("Valid URL din (https://...)");
-      return;
-    }
-    setImages((prev) => [...prev, url]);
-    setImageInput("");
-  };
-
-  const removeImage = (idx: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const onSubmit = (values: FormValues) => {
@@ -236,73 +221,14 @@ export default function ProductForm({
             </Field>
           </Card>
 
-          {/* Images */}
-          <Card title="Images">
+          {/* Images — gallery-first picker */}
+          <Card title="Product ছবি">
             <p className="text-xs text-ink/50 mb-3">
-              Image URL paste korun (Unsplash, Supabase Storage, ba ono kothao
-              hosted). Onnoto 1 ta lagbe.
+              নতুন প্রোডাক্টের ছবি এখন সরাসরি ফোন/কম্পিউটারের গ্যালারি থেকে
+              সিলেক্ট করা যাবে — URL খোঁজা লাগবে না। অন্তত ১টা ছবি লাগবে,
+              প্রথম ছবিটাই কভার হিসেবে দেখাবে।
             </p>
-            <div className="flex gap-2 mb-4">
-              <input
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addImage();
-                  }
-                }}
-                className="input-field flex-1"
-                placeholder="https://images.unsplash.com/..."
-              />
-              <button
-                type="button"
-                onClick={addImage}
-                className="rounded-xl bg-mango-gradient px-4 text-sm font-semibold text-ink hover:scale-105 transition shrink-0 inline-flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add
-              </button>
-            </div>
-
-            {images.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-mango-300 p-8 text-center text-sm text-ink/50">
-                <ImagePlus className="h-10 w-10 mx-auto text-mango-400 mb-2" />
-                Akhono kono image add hoy ni
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {images.map((src, i) => (
-                  <div
-                    key={src + i}
-                    className="relative group aspect-square rounded-xl overflow-hidden bg-mango-100 border border-mango-200"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={src}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.opacity = "0.3";
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute top-1.5 right-1.5 grid place-items-center h-7 w-7 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition"
-                      aria-label="Remove"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                    {i === 0 && (
-                      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-mango-gradient px-2 py-0.5 text-[10px] font-bold text-ink shadow-glow">
-                        Main
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <ImageUploadField images={images} onChange={setImages} folder="products" max={8} label="প্রোডাক্টের ছবি" />
           </Card>
         </div>
 

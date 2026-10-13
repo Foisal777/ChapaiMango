@@ -8,6 +8,8 @@ import Footer from "@/components/layout/Footer";
 import { getSiteUrl, SITE } from "@/lib/site";
 import { getSiteSettings } from "@/lib/settings";
 import { SettingsProvider } from "@/components/providers/SettingsProvider";
+import { LocaleProvider } from "@/components/providers/LocaleProvider";
+import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
 
 /*
@@ -134,13 +136,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const settings = await getSiteSettings();
+  const locale = getLocale();
 
   return (
     <html
-      lang="bn"
+      lang={locale === "en" ? "en" : "bn"}
       className={`${inter.variable} ${hindSiliguri.variable}`}
     >
       <body className="min-h-screen bg-cream text-ink">
+        <LocaleProvider initial={locale}>
         <SettingsProvider value={settings}>
         <SiteShell
           topMarquee={
@@ -166,6 +170,7 @@ export default async function RootLayout({
           {children}
         </SiteShell>
         </SettingsProvider>
+        </LocaleProvider>
         <Toaster
           position="top-center"
           toastOptions={{

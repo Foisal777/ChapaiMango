@@ -7,8 +7,11 @@ import { useCart } from "@/store/cart-store";
 import { formatBDT } from "@/lib/utils";
 import { calcDeliveryFee, totalCartKg } from "@/lib/config";
 import { useSettings } from "@/components/providers/SettingsProvider";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { num } from "@/lib/i18n";
 
 export default function CartView() {
+  const { locale, t: d } = useLocale();
   const { commerce } = useSettings();
   const items = useCart((s) => s.items);
   const setQty = useCart((s) => s.setQty);
@@ -19,12 +22,12 @@ export default function CartView() {
     return (
       <div className="glass rounded-3xl p-14 text-center">
         <ShoppingBag className="h-16 w-16 mx-auto text-mango-400" />
-        <h2 className="font-display-bn text-2xl font-bold mt-4">কার্ট ফাঁকা</h2>
+        <h2 className="font-display-bn text-2xl font-bold mt-4">{d.cart.emptyTitle}</h2>
         <p className="mt-2 text-ink/60">
-          আপনার পছন্দের আম বেছে কার্টে যোগ করুন।
+          {d.cart.emptyDesc}
         </p>
         <Link href="/products" className="btn-primary mt-6 inline-flex">
-          শপ দেখুন
+          {d.cart.browse}
         </Link>
       </div>
     );
@@ -80,7 +83,7 @@ export default function CartView() {
                     <Minus className="h-3.5 w-3.5" />
                   </button>
                   <span className="min-w-[3ch] text-center text-sm font-semibold">
-                    {it.quantity_kg} কেজি
+                    {num(it.quantity_kg, locale)} {d.common.kg}
                   </span>
                   <button
                     onClick={() => setQty(it.id, it.quantity_kg + 1)}
@@ -97,7 +100,7 @@ export default function CartView() {
             <button
               onClick={() => remove(it.id)}
               className="grid place-items-center h-9 w-9 rounded-full text-red-500 hover:bg-red-50 shrink-0"
-              aria-label="সরান"
+              aria-label={d.cart.remove}
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -106,33 +109,30 @@ export default function CartView() {
       </div>
 
       <aside className="lg:sticky lg:top-24 self-start glass rounded-3xl p-6">
-        <h3 className="font-display-bn text-xl font-bold mb-4">অর্ডার সারমর্ম</h3>
-        <Row label="সাবটোটাল" value={formatBDT(subtotal)} />
+        <h3 className="font-display-bn text-xl font-bold mb-4">{d.cart.summary}</h3>
+        <Row label={d.common.subtotal} value={formatBDT(subtotal)} />
         <Row
-          label="ডেলিভারি"
-          value={deliveryFee === 0 ? "ফ্রি" : formatBDT(deliveryFee)}
+          label={d.common.delivery}
+          value={deliveryFee === 0 ? d.common.free : formatBDT(deliveryFee)}
         />
         {showFreeDeliveryHint && (
           <p className="text-[11px] text-mango-700 mt-1">
-            ৳{commerce.freeDeliveryOver - subtotal} আরও কিনলেই → ফ্রি ডেলিভারি!
+            {d.cart.freeDeliveryHint(formatBDT(commerce.freeDeliveryOver - subtotal))}
           </p>
         )}
         <div className="my-4 border-t border-mango-200/60" />
-        <Row label="মোট" value={formatBDT(total)} bold />
+        <Row label={d.common.total} value={formatBDT(total)} bold />
 
         {!meetsMinimum && commerce.minOrderKg > 0 && (
           <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-3 flex gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-            <p className="text-xs text-amber-800 leading-relaxed">
-              ন্যূনতম অর্ডার {commerce.minOrderKg} কেজি — কার্টে আরও{" "}
-              <strong>{kgShort} কেজি</strong> যোগ করুন।
-            </p>
+<p className="text-xs text-amber-800 leading-relaxed">{d.cart.minOrderWarn(commerce.minOrderKg, kgShort, locale)}</p>
           </div>
         )}
 
         {meetsMinimum ? (
           <Link href="/checkout" className="btn-primary w-full mt-6">
-            চেকআউট
+            {d.cart.checkout}
           </Link>
         ) : (
           <button
@@ -140,14 +140,14 @@ export default function CartView() {
             className="btn-primary w-full mt-6 cursor-not-allowed"
             aria-disabled="true"
           >
-            চেকআউট ({totalKg}/{commerce.minOrderKg} কেজি)
+{d.cart.checkoutKg(totalKg, commerce.minOrderKg, locale)}
           </button>
         )}
         <Link
           href="/products"
           className="block text-center mt-3 text-xs text-ink/60 hover:text-mango-700"
         >
-          ← আরও কিনতে যান
+          {d.cart.continueShopping}
         </Link>
       </aside>
     </div>

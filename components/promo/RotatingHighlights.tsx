@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Award, Leaf, MapPin, Truck, type LucideIcon } from "lucide-react";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 /**
  * Premium auto-rotating hero strip between Hero and FeaturedMangoes.
@@ -21,32 +22,13 @@ type Highlight = {
   sub: string;
 };
 
-const HIGHLIGHTS: Highlight[] = [
-  {
-    icon: Truck,
-    title: "সারাদেশে ফ্রী ডেলিভারি",
-    sub: "৬৪ জেলায় ২৪–৭২ ঘণ্টায় হোম ডেলিভারি"
-  },
-  {
-    icon: Award,
-    title: "চাঁপাইনবাবগঞ্জের প্রিমিয়াম আম",
-    sub: "GI ট্যাগ পাওয়া ক্ষীরসাপাত · ঐতিহ্যবাহী হিমসাগর"
-  },
-  {
-    icon: Leaf,
-    title: "১০০% গাছপাকা, কেমিক্যাল-মুক্ত",
-    sub: "তিন প্রজন্মের ঐতিহ্য, খাঁটি বাংলা আম"
-  },
-  {
-    icon: MapPin,
-    title: "সরাসরি বাগান থেকে আপনার দরজায়",
-    sub: "নিজামপুর, নাচোল, চাঁপাইনবাবগঞ্জ"
-  }
-];
+const HIGHLIGHT_ICONS: LucideIcon[] = [Truck, Award, Leaf, MapPin];
 
 const ROTATE_MS = 3800;
 
 export default function RotatingHighlights() {
+  const { t: d } = useLocale();
+  const HIGHLIGHTS: Highlight[] = d.home.highlights.map((h, i) => ({ icon: HIGHLIGHT_ICONS[i], ...h }));
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 

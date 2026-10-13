@@ -1,6 +1,8 @@
 import { Phone, Mail, MapPin, Clock, ExternalLink } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
 import { getSiteSettings } from "@/lib/settings";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata = {
   title: "যোগাযোগ — Chapai Mango House",
@@ -22,6 +24,7 @@ export const metadata = {
  */
 
 export default async function ContactPage() {
+  const d = getDictionary(getLocale());
   const { contact } = await getSiteSettings();
   const phone = contact.phone;
   const email = contact.email;
@@ -34,7 +37,7 @@ export default async function ContactPage() {
   // pin; `z=15` is street-level, `hl=bn` keeps the UI in Bangla.
   const mapEmbedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(
     `${lat},${lng}(${mapLabel})`
-  )}&z=15&hl=bn&output=embed`;
+  )}&z=15&hl=${getLocale() === "en" ? "en" : "bn"}&output=embed`;
   // Friendly external link — opens the full Google Maps app/site.
   const mapHref = `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lng}`;
 
@@ -42,13 +45,12 @@ export default async function ContactPage() {
     <>
       <section className="bg-hero-radial">
         <div className="container-x py-16 text-center max-w-3xl mx-auto">
-          <p className="text-sm font-semibold text-mango-600 mb-2">━ যোগাযোগ</p>
+          <p className="text-sm font-semibold text-mango-600 mb-2">{d.contact.kicker}</p>
           <h1 className="font-display-bn text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-            আমাদের সাথে <span className="shimmer-text">যোগাযোগ করুন</span>
+            {d.contact.titleA} <span className="shimmer-text">{d.contact.titleB}</span>
           </h1>
           <p className="mt-5 text-ink/70 text-base sm:text-lg">
-            অর্ডার, ডেলিভারি বা যে কোনো প্রশ্ন — আমরা সবসময় পাশে আছি। ফোন,
-            ইমেইল অথবা ফর্ম পূরণ করুন।
+{d.contact.subtitleLong}
           </p>
         </div>
       </section>
@@ -57,34 +59,34 @@ export default async function ContactPage() {
         <div className="space-y-4">
           <InfoCard
             icon={<Phone className="h-5 w-5" />}
-            title="ফোন / WhatsApp"
+            title={d.contact.phoneCard}
             value={phone}
             href={`tel:${phone}`}
           />
           <InfoCard
             icon={<Mail className="h-5 w-5" />}
-            title="ইমেইল"
+            title={d.contact.emailCard}
             value={email}
             href={`mailto:${email}`}
           />
           <InfoCard
             icon={<MapPin className="h-5 w-5" />}
-            title="বাগান / অফিস"
+            title={d.contact.addressCard}
             value="নিজামপুর, নাচোল, চাঁপাইনবাবগঞ্জ, রাজশাহী, বাংলাদেশ"
           />
           <InfoCard
             icon={<Clock className="h-5 w-5" />}
-            title="কাস্টমার সাপোর্ট"
-            value="সকাল ৯টা — রাত ৯টা (প্রতিদিন)"
+            title={d.contact.support}
+            value={d.contact.supportHours}
           />
         </div>
 
         <div className="lg:col-span-2 glass rounded-3xl p-6 sm:p-8">
           <h2 className="font-display-bn text-xl sm:text-2xl font-bold mb-1">
-            মেসেজ লিখুন
+            {d.contact.writeMessage}
           </h2>
           <p className="text-sm text-ink/60 mb-6">
-            ফর্ম পূরণ করলে আমরা ২৪ ঘণ্টার মধ্যে যোগাযোগ করব।
+            {d.contact.replyNote}
           </p>
           <ContactForm />
         </div>
@@ -112,7 +114,7 @@ export default async function ContactPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full bg-mango-gradient px-4 py-1.5 text-xs font-bold text-ink shadow-soft hover:scale-105 transition shrink-0"
             >
-              Google Maps-এ দেখুন
+              {d.contact.viewMaps}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
