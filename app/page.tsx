@@ -6,8 +6,10 @@ import CTA from "@/components/home/CTA";
 import RotatingHighlights from "@/components/promo/RotatingHighlights";
 import SocialFollow from "@/components/social/SocialFollow";
 import JsonLd from "@/components/seo/JsonLd";
+import Reveal from "@/components/motion/Reveal";
 import { getProducts, getTestimonials } from "@/lib/data";
-import { getSiteUrl, SITE } from "@/lib/site";
+import { getSiteUrl } from "@/lib/site";
+import { getSiteSettings } from "@/lib/settings";
 
 export const revalidate = 3600;
 
@@ -18,33 +20,38 @@ export default async function HomePage() {
   ]);
   const featured = products.filter((p) => p.is_featured);
   const siteUrl = getSiteUrl();
+  const settings = await getSiteSettings();
+  const { brand, contact, social } = settings;
 
   // Organization markup — tells Google "this is a brand", drives the
   // sitelinks search box and the brand panel on the right of search.
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: SITE.name,
-    alternateName: SITE.nameBn,
+    name: brand.name,
+    alternateName: brand.nameBn,
     url: siteUrl,
-    logo: `${siteUrl}/opengraph-image`,
-    description: SITE.longDescription,
+    logo: `${siteUrl}/icon`,
+    description: brand.longDescription,
     address: {
       "@type": "PostalAddress",
-      streetAddress: "নিজামপুর",
+      streetAddress: contact.address,
       addressLocality: "নাচোল",
       addressRegion: "চাঁপাইনবাবগঞ্জ",
       addressCountry: "BD"
     },
     sameAs: [
-      process.env.NEXT_PUBLIC_FACEBOOK_URL,
-      process.env.NEXT_PUBLIC_TIKTOK_URL
+      social.facebook,
+      social.tiktok,
+      social.instagram,
+      social.youtube
     ].filter(Boolean),
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: process.env.NEXT_PUBLIC_BUSINESS_PHONE,
+      // Skip the "+880 1XXX-XXXXXX" placeholder so Google never indexes it.
+      telephone: contact.phone.includes("XXX") ? undefined : contact.phone,
       contactType: "customer service",
-      email: process.env.NEXT_PUBLIC_BUSINESS_EMAIL,
+      email: contact.email,
       availableLanguage: ["Bengali", "English"]
     }
   };
@@ -54,7 +61,7 @@ export default async function HomePage() {
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: SITE.name,
+    name: brand.name,
     url: siteUrl,
     inLanguage: "bn-BD",
     potentialAction: {
@@ -70,8 +77,12 @@ export default async function HomePage() {
       <JsonLd data={websiteJsonLd} />
       <Hero heroImages={products.flatMap((p) => p.images).slice(0, 6)} />
       <RotatingHighlights />
-      <FeaturedMangoes products={featured.length ? featured : products} />
-      <WhyChooseUs />
+      <Reveal>
+        <FeaturedMangoes products={featured.length ? featured : products} />
+      </Reveal>
+      <Reveal>
+        <WhyChooseUs />
+      </Reveal>
       {/* Real customer reviews. Hidden until we have at least one
           approved review with rating >=4 and a non-trivial body, so
           the brand never shows an empty "What people are saying"
@@ -79,10 +90,16 @@ export default async function HomePage() {
           calls revalidatePath("/") so new reviews appear here on the
           next render. */}
       {testimonials.length > 0 && (
-        <Testimonials testimonials={testimonials} />
+        <Reveal>
+          <Testimonials testimonials={testimonials} />
+        </Reveal>
       )}
-      <SocialFollow />
-      <CTA />
+      <Reveal>
+        <SocialFollow />
+      </Reveal>
+      <Reveal>
+        <CTA />
+      </Reveal>
     </>
   );
 }

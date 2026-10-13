@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/settings";
 import {
   Shield,
   Database,
@@ -23,11 +24,10 @@ export const revalidate = 86400; // 24h
 
 const LAST_UPDATED = "২৩ মে, ২০২৬";
 
-export default function PrivacyPolicyPage() {
-  const businessEmail =
-    process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "hello@chapaimangohouse.com";
-  const businessPhone =
-    process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+880 1XXX-XXXXXX";
+export default async function PrivacyPolicyPage() {
+  const { contact } = await getSiteSettings();
+  const businessEmail = contact.email;
+  const businessPhone = contact.phone;
 
   return (
     <>

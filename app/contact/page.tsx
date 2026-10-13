@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin, Clock, ExternalLink } from "lucide-react";
 import ContactForm from "@/components/contact/ContactForm";
+import { getSiteSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "যোগাযোগ — Chapai Mango House",
@@ -19,18 +20,15 @@ export const metadata = {
  * Using `https://maps.google.com/maps?q=LAT,LNG&output=embed` is the
  * most reliable no-API-key embed in 2024+.
  */
-const DEFAULT_LAT = "24.7011";
-const DEFAULT_LNG = "88.3500";
-const DEFAULT_LABEL = "নিজামপুর, নাচোল, চাঁপাইনবাবগঞ্জ";
 
-export default function ContactPage() {
-  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+880 1XXX-XXXXXX";
-  const email =
-    process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "hello@chapaimangohouse.com";
+export default async function ContactPage() {
+  const { contact } = await getSiteSettings();
+  const phone = contact.phone;
+  const email = contact.email;
 
-  const lat = process.env.NEXT_PUBLIC_BUSINESS_MAP_LAT || DEFAULT_LAT;
-  const lng = process.env.NEXT_PUBLIC_BUSINESS_MAP_LNG || DEFAULT_LNG;
-  const mapLabel = process.env.NEXT_PUBLIC_BUSINESS_MAP_LABEL || DEFAULT_LABEL;
+  const lat = String(contact.mapLat);
+  const lng = String(contact.mapLng);
+  const mapLabel = contact.mapLabel;
 
   // No-API-key embed. The `q=lat,lng(label)` syntax drops a labelled
   // pin; `z=15` is street-level, `hl=bn` keeps the UI in Bangla.

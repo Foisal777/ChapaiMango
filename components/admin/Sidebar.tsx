@@ -13,6 +13,7 @@ import {
   Megaphone,
   Users,
   FileText,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -33,7 +34,8 @@ const NAV = [
   { href: "/admin/marquees", label: "Marquees", icon: Megaphone },
   { href: "/admin/team", label: "Team", icon: Users },
   { href: "/admin/refund-policy", label: "Refund Policy", icon: FileText },
-  { href: "/admin/notifications", label: "Notifications", icon: Bell }
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin/settings", label: "Site Settings", icon: Settings }
 ];
 
 export default function Sidebar({ email }: { email: string }) {

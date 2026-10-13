@@ -220,3 +220,34 @@ body {
 .prose-mango h2:first-child {
   @apply mt-0;
 }
+
+/*
+ * Scroll reveal (components/motion/Reveal.tsx). Pure CSS so it costs no
+ * JavaScript. Elements start hidden and lift/fade in once they enter the
+ * viewport. Users with "reduce motion" enabled see content immediately.
+ */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  filter: blur(6px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  will-change: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}

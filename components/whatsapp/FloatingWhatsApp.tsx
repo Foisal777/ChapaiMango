@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSettings } from "@/components/providers/SettingsProvider";
 
 /**
  * Floating WhatsApp call-to-action.
@@ -8,19 +9,20 @@ import { useEffect, useState } from "react";
  * Renders a fixed-position green pill in the bottom-right corner that
  * opens a WhatsApp chat with the business with a Bangla pre-filled
  * message. We:
- *   - read the number from NEXT_PUBLIC_WHATSAPP_NUMBER (international
- *     format, no `+`, e.g. "8801XXXXXXXXX") and fall back to
- *     NEXT_PUBLIC_BUSINESS_PHONE so existing setups work.
- *   - render nothing if neither env var is set, so dev / preview never
+ *   - read the number from the admin-managed settings (contact.whatsapp,
+ *     international format, no `+`, e.g. "8801XXXXXXXXX"), falling back
+ *     to contact.phone.
+ *   - render nothing if no usable number is set, so dev / preview never
  *     ship a "01XXXXXXXXX" button.
  *   - delay first paint by ~600ms so the button never competes with
  *     LCP on the homepage.
  */
 export default function FloatingWhatsApp() {
   const [show, setShow] = useState(false);
+  const { contact } = useSettings();
 
   // Sanitize phone -> digits-only international format expected by wa.me
-  const number = pickNumber();
+  const number = pickNumber(contact.whatsapp || contact.phone);
 
   useEffect(() => {
     if (!number) return;
@@ -51,11 +53,7 @@ export default function FloatingWhatsApp() {
   );
 }
 
-function pickNumber(): string | null {
-  const raw =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ||
-    process.env.NEXT_PUBLIC_BUSINESS_PHONE ||
-    "";
+function pickNumber(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
   if (!digits || digits.includes("XXXXXXXXX")) return null;
   // BD local "01XXXXXXXXX" -> "8801XXXXXXXXX". Anything that already

@@ -5,9 +5,11 @@ import Link from "next/link";
 import { AlertTriangle, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "@/store/cart-store";
 import { formatBDT } from "@/lib/utils";
-import { calcDeliveryFee, config, totalCartKg } from "@/lib/config";
+import { calcDeliveryFee, totalCartKg } from "@/lib/config";
+import { useSettings } from "@/components/providers/SettingsProvider";
 
 export default function CartView() {
+  const { commerce } = useSettings();
   const items = useCart((s) => s.items);
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
@@ -28,18 +30,18 @@ export default function CartView() {
     );
   }
 
-  const deliveryFee = calcDeliveryFee(subtotal);
+  const deliveryFee = calcDeliveryFee(subtotal, commerce);
   const total = subtotal + deliveryFee;
   const totalKg = totalCartKg(items);
-  const meetsMinimum = totalKg >= config.minOrderKg;
-  const kgShort = Math.max(0, config.minOrderKg - totalKg);
+  const meetsMinimum = totalKg >= commerce.minOrderKg;
+  const kgShort = Math.max(0, commerce.minOrderKg - totalKg);
 
   // Show the "buy ৳X more for free delivery" hint only when there's a
   // chargeable fee that would still flip to free above some threshold.
   const showFreeDeliveryHint =
-    config.deliveryFee > 0 &&
-    config.freeDeliveryOver > 0 &&
-    subtotal < config.freeDeliveryOver;
+    commerce.deliveryFee > 0 &&
+    commerce.freeDeliveryOver > 0 &&
+    subtotal < commerce.freeDeliveryOver;
 
   return (
     <div className="grid lg:grid-cols-3 gap-8">
@@ -112,17 +114,17 @@ export default function CartView() {
         />
         {showFreeDeliveryHint && (
           <p className="text-[11px] text-mango-700 mt-1">
-            ৳{config.freeDeliveryOver - subtotal} আরও কিনলেই → ফ্রি ডেলিভারি!
+            ৳{commerce.freeDeliveryOver - subtotal} আরও কিনলেই → ফ্রি ডেলিভারি!
           </p>
         )}
         <div className="my-4 border-t border-mango-200/60" />
         <Row label="মোট" value={formatBDT(total)} bold />
 
-        {!meetsMinimum && config.minOrderKg > 0 && (
+        {!meetsMinimum && commerce.minOrderKg > 0 && (
           <div className="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-3 flex gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
             <p className="text-xs text-amber-800 leading-relaxed">
-              ন্যূনতম অর্ডার {config.minOrderKg} কেজি — কার্টে আরও{" "}
+              ন্যূনতম অর্ডার {commerce.minOrderKg} কেজি — কার্টে আরও{" "}
               <strong>{kgShort} কেজি</strong> যোগ করুন।
             </p>
           </div>
@@ -138,7 +140,7 @@ export default function CartView() {
             className="btn-primary w-full mt-6 cursor-not-allowed"
             aria-disabled="true"
           >
-            চেকআউট ({totalKg}/{config.minOrderKg} কেজি)
+            চেকআউট ({totalKg}/{commerce.minOrderKg} কেজি)
           </button>
         )}
         <Link

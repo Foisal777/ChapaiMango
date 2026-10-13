@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
 import AcceptedPayments from "@/components/social/AcceptedPayments";
+import { getSiteSettings } from "@/lib/settings";
 
 // Inline TikTok logo (lucide doesn't ship one)
 function TikTokIcon({ className }: { className?: string }) {
@@ -16,16 +17,12 @@ function TikTokIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Footer() {
-  const phone = process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+880 1XXX-XXXXXX";
-  const email =
-    process.env.NEXT_PUBLIC_BUSINESS_EMAIL || "hello@chapaimangohouse.com";
-  const facebookUrl =
-    process.env.NEXT_PUBLIC_FACEBOOK_URL ||
-    "https://www.facebook.com/share/1E8A9tnY4U/";
-  const tiktokUrl =
-    process.env.NEXT_PUBLIC_TIKTOK_URL ||
-    "https://www.tiktok.com/@chapai_mango";
+export default async function Footer() {
+  const { brand, contact, social } = await getSiteSettings();
+  const phone = contact.phone;
+  const email = contact.email;
+  const facebookUrl = social.facebook;
+  const tiktokUrl = social.tiktok;
 
   return (
     <footer className="mt-24 bg-gradient-to-b from-cream to-mango-100 border-t border-mango-200/50">
@@ -34,7 +31,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 mb-4">
             <span className="text-3xl">🥭</span>
             <span className="font-display text-xl sm:text-2xl font-bold">
-              Chapai <span className="shimmer-text">Mango</span> House
+              {brand.name}
             </span>
           </div>
           <p className="text-ink/70 text-sm max-w-md leading-relaxed">
