@@ -1,5 +1,6 @@
 import PaymentBrandLogo from "@/components/payment/PaymentBrandLogo";
-import { config } from "@/lib/config";
+import { isPaymentMethodEnabled } from "@/lib/config";
+import { getSiteSettings } from "@/lib/settings";
 import type { PaymentMethod } from "@/types";
 
 /**
@@ -33,9 +34,11 @@ const DISPLAY_ORDER: PaymentMethod[] = [
   "bank"
 ];
 
-export default function AcceptedPayments() {
-  const enabled = new Set(config.paymentMethods);
-  const visible = DISPLAY_ORDER.filter((m) => enabled.has(m));
+export default async function AcceptedPayments() {
+  const { payments } = await getSiteSettings();
+  const visible = DISPLAY_ORDER.filter((m) =>
+    isPaymentMethodEnabled(payments, m)
+  );
 
   if (visible.length === 0) return null;
 

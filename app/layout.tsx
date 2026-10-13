@@ -6,6 +6,8 @@ import SiteShell from "@/components/layout/SiteShell";
 import TopMarquee from "@/components/promo/TopMarquee";
 import Footer from "@/components/layout/Footer";
 import { getSiteUrl, SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/settings";
+import { SettingsProvider } from "@/components/providers/SettingsProvider";
 import "./globals.css";
 
 /*
@@ -44,120 +46,102 @@ const hindSiliguri = Hind_Siliguri({
 
 const siteUrl = getSiteUrl();
 
-export const metadata: Metadata = {
-  // metadataBase makes every relative og:image / canonical absolute.
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: `${SITE.name} — চাঁপাইনবাবগঞ্জের সেরা আম`,
-    template: `%s — ${SITE.name}`
-  },
-  description: SITE.longDescription,
-  applicationName: SITE.name,
-  authors: [{ name: SITE.name, url: siteUrl }],
-  creator: SITE.name,
-  publisher: SITE.name,
-  category: "shopping",
-  keywords: [
-    "Chapai Mango House",
-    "চাঁপাই ম্যাঙ্গো",
-    "চাঁপাইনবাবগঞ্জের আম",
-    "চাঁপাইয়ের আম অনলাইনে",
-    "আম অনলাইনে কিনুন",
-    "Himsagar mango",
-    "Langra mango",
-    "Khirsapat mango",
-    "Fazli mango",
-    "Amrapali mango",
-    "Gopalbhog mango",
-    "buy mango online Bangladesh",
-    "GI Khirsapat",
-    "Nachole Chapainawabganj",
-    "organic mango Bangladesh"
-  ],
-  alternates: {
-    canonical: "/",
-    languages: {
-      "bn-BD": "/",
-      "en-US": "/"
-    }
-  },
-  openGraph: {
-    type: "website",
-    locale: SITE.defaultLocale,
-    url: siteUrl,
-    siteName: SITE.name,
-    title: `${SITE.name} — চাঁপাইনবাবগঞ্জের সেরা আম`,
-    description: SITE.shortDescription,
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: `${SITE.name} — চাঁপাইনবাবগঞ্জের গাছপাকা আম`
+/**
+ * Metadata is generated from the operator-managed site settings, so the
+ * SEO title / description / keywords / verification tokens can be changed
+ * from /admin/settings without a redeploy.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await getSiteSettings();
+  const brandTitle = `${s.brand.name} — চাঁপাইনবাবগঞ্জের সেরা আম`;
+  const keywords = s.seo.keywords
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  return {
+    // metadataBase makes every relative og:image / canonical absolute.
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: brandTitle,
+      template: `%s — ${s.brand.name}`
+    },
+    description: s.brand.longDescription,
+    applicationName: s.brand.name,
+    authors: [{ name: s.brand.name, url: siteUrl }],
+    creator: s.brand.name,
+    publisher: s.brand.name,
+    category: "shopping",
+    keywords,
+    alternates: {
+      canonical: "/",
+      languages: {
+        "bn-BD": "/"
       }
-    ]
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: `${SITE.name} — চাঁপাইনবাবগঞ্জের সেরা আম`,
-    description: SITE.shortDescription,
-    images: ["/opengraph-image"]
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    },
+    openGraph: {
+      type: "website",
+      locale: SITE.defaultLocale,
+      url: siteUrl,
+      siteName: s.brand.name,
+      title: brandTitle,
+      description: s.brand.shortDescription,
+      images: [
+        {
+          url: "/opengraph-image",
+          width: 1200,
+          height: 630,
+          alt: `${s.brand.name} — চাঁপাইনবাবগঞ্জের গাছপাকা আম`
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: brandTitle,
+      description: s.brand.shortDescription,
+      images: ["/opengraph-image"]
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1
+      }
+    },
+    icons: {
+      icon: "/icon",
+      apple: "/apple-icon"
+    },
+    manifest: "/manifest.webmanifest",
+    // Search Console / Bing Webmaster verification tokens (set in
+    // /admin/settings → SEO). Blank tokens are simply not rendered.
+    verification: {
+      google: s.seo.googleVerification || undefined,
+      other: s.seo.bingVerification
+        ? { "msvalidate.01": s.seo.bingVerification }
+        : undefined
     }
-  },
-  icons: {
-    icon: "/favicon.ico"
-  },
-  // Search Console / Bing Webmaster verification.
-  //
-  // We support TWO Search Console verification methods at once because
-  // every operator hits a different gotcha:
-  //
-  //   1) DNS TXT record — the operator adds
-  //        google-site-verification=<token>
-  //      to their domain's DNS zone. Most reliable for custom domains
-  //      and never expires. Doesn't need any code change to work.
-  //
-  //   2) HTML meta tag — Google reads the
-  //        <meta name="google-site-verification" content="<token>" />
-  //      we render below. Works regardless of DNS, useful as a backup
-  //      while DNS propagation is still settling.
-  //
-  // The hard-coded fallback is the same token currently set as the
-  // operator's DNS TXT record on dealhub2026.shop, so HTML-tag
-  // verification picks up the slack if the TXT record is misconfigured
-  // or hasn't propagated yet. Setting NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-  // in Railway overrides this default.
-  verification: {
-    google:
-      process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ??
-      "9l1HBSx0SpXFJUDl4Eq4YJ2CoOPA41pJO04mTiEd_20",
-    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
-      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
-      : undefined
-  }
-};
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  const settings = await getSiteSettings();
+
   return (
     <html
       lang="bn"
       className={`${inter.variable} ${hindSiliguri.variable}`}
     >
       <body className="min-h-screen bg-cream text-ink">
+        <SettingsProvider value={settings}>
         <SiteShell
           topMarquee={
             <Suspense
@@ -181,6 +165,7 @@ export default function RootLayout({
         >
           {children}
         </SiteShell>
+        </SettingsProvider>
         <Toaster
           position="top-center"
           toastOptions={{

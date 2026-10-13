@@ -14,11 +14,13 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   amountToSendNow,
   calcDeliveryFee,
-  config as siteConfig,
   defaultPaymentMethod,
   getEnabledPaymentMethodsInfo,
+  isPaymentMethodEnabled,
   paymentMethodInfo
 } from "@/lib/config";
+import type { PaymentSettings } from "@/lib/config";
+import { useSettings } from "@/components/providers/SettingsProvider";
 import PaymentBrandLogo from "@/components/payment/PaymentBrandLogo";
 import type { PaymentMethod } from "@/types";
 import type { BankAccountInfo } from "@/lib/config";
@@ -46,7 +48,8 @@ const PAYMENT_METHOD_VALUES = [
   "bank"
 ] as const;
 
-const schema = z
+function buildSchema(payments: PaymentSettings) {
+  return z
   .object({
     customer_name: z.string().min(2, "আপনার নাম লিখুন"),
     phone: z.string().min(10, "সঠিক ফোন নম্বর দিন").max(15),
@@ -59,7 +62,7 @@ const schema = z
     payment_sender_number: z.string().optional()
   })
   .refine(
-    (data) => siteConfig.paymentMethods.includes(data.payment_method),
+    (data) => isPaymentMethodEnabled(payments, data.payment_method),
     {
       message: "এই পেমেন্ট পদ্ধতি বর্তমানে চালু নেই",
       path: ["payment_method"]
@@ -71,7 +74,7 @@ const schema = z
     // approximate with "anything that isn't COD-with-zero-advance" —
     // for COD with advance>0 the customer sent money via some other
     // rail, so they have a TrxID to enter.
-    const info = paymentMethodInfo(data.payment_method);
+    const info = paymentMethodInfo(payments, data.payment_method);
     const needsProof =
       info.advance > 0 || (data.payment_method !== "cod");
     if (!needsProof) return;
@@ -90,11 +93,14 @@ const schema = z
       });
     }
   });
+}
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 export default function CheckoutForm() {
   const router = useRouter();
+  const { commerce, payments } = useSettings();
+  const schema = useMemo(() => buildSchema(payments), [payments]);
   const items = useCart((s) => s.items);
   const subtotal = useCart((s) => s.subtotal());
   const clear = useCart((s) => s.clear);
@@ -104,7 +110,7 @@ export default function CheckoutForm() {
   );
   const [user, setUser] = useState<User | null>(null);
 
-  const deliveryFee = calcDeliveryFee(subtotal);
+  const deliveryFee = calcDeliveryFee(subtotal, commerce);
   const total = subtotal + deliveryFee;
 
   // The full list of methods the operator has enabled, with their
@@ -112,7 +118,7 @@ export default function CheckoutForm() {
   // returned by `getEnabledPaymentMethodsInfo()`, which mirrors the
   // operator's NEXT_PUBLIC_PAYMENT_METHODS env var (or the built-in
   // default `cod, bkash, nagad, rocket, upay, bank`).
-  const methods = useMemo(() => getEnabledPaymentMethodsInfo(), []);
+  const methods = useMemo(() => getEnabledPaymentMethodsInfo(payments), [payments]);
 
   const {
     register,
@@ -123,7 +129,7 @@ export default function CheckoutForm() {
     formState: { errors }
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { payment_method: defaultPaymentMethod() }
+    defaultValues: { payment_method: defaultPaymentMethod(payments) }
   });
 
   // Pull the signed-in user (server already redirected unauthed visitors
@@ -170,9 +176,9 @@ export default function CheckoutForm() {
       return;
     }
     const totalKg = items.reduce((s, i) => s + (i.quantity_kg || 0), 0);
-    if (siteConfig.minOrderKg > 0 && totalKg < siteConfig.minOrderKg) {
+    if (commerce.minOrderKg > 0 && totalKg < commerce.minOrderKg) {
       toast.error(
-        `ন্যূনতম অর্ডার ${siteConfig.minOrderKg} কেজি — কার্টে এখন ${totalKg} কেজি`
+        `ন্যূনতম অর্ডার ${commerce.minOrderKg} কেজি — কার্টে এখন ${totalKg} কেজি`
       );
       router.push("/cart");
       return;

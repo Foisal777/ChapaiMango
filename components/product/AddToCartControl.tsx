@@ -6,13 +6,14 @@ import { Info, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import toast from "react-hot-toast";
 import { useCart } from "@/store/cart-store";
 import { formatBDT } from "@/lib/utils";
-import { config } from "@/lib/config";
+import { useSettings } from "@/components/providers/SettingsProvider";
 import type { Mango } from "@/types";
 
 export default function AddToCartControl({ product }: { product: Mango }) {
   // Default to the configured minimum order so a one-product purchase
   // already satisfies the cart-level requirement.
-  const initial = Math.max(1, config.minOrderKg || 1);
+  const { commerce } = useSettings();
+  const initial = Math.max(1, commerce.minOrderKg || 1);
   const [qty, setQty] = useState(initial);
   const add = useCart((s) => s.add);
   const router = useRouter();
@@ -69,10 +70,10 @@ export default function AddToCartControl({ product }: { product: Mango }) {
             <Plus className="h-4 w-4" />
           </button>
         </div>
-        {config.minOrderKg > 0 && (
+        {commerce.minOrderKg > 0 && (
           <p className="mt-2 text-[11px] text-ink/55 inline-flex items-center gap-1">
             <Info className="h-3 w-3" />
-            ন্যূনতম অর্ডার (কার্টে মোট) {config.minOrderKg} কেজি।
+            ন্যূনতম অর্ডার (কার্টে মোট) {commerce.minOrderKg} কেজি।
           </p>
         )}
       </div>

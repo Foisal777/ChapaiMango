@@ -1,4 +1,5 @@
 import { Facebook } from "lucide-react";
+import { getSiteSettings } from "@/lib/settings";
 
 function TikTokIcon({ className }: { className?: string }) {
   return (
@@ -18,13 +19,10 @@ function TikTokIcon({ className }: { className?: string }) {
  * Testimonials and the bottom CTA). Same brand-coloured pills as
  * the footer but blown up so customers actually notice them.
  */
-export default function SocialFollow() {
-  const facebookUrl =
-    process.env.NEXT_PUBLIC_FACEBOOK_URL ||
-    "https://www.facebook.com/share/1E8A9tnY4U/";
-  const tiktokUrl =
-    process.env.NEXT_PUBLIC_TIKTOK_URL ||
-    "https://www.tiktok.com/@chapai_mango";
+export default async function SocialFollow() {
+  const { social } = await getSiteSettings();
+  const facebookUrl = social.facebook;
+  const tiktokUrl = social.tiktok;
 
   return (
     <section className="container-x py-12">

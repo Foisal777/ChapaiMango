@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Award, Sparkles } from "lucide-react";
 import HeroSlider from "./HeroSlider";
+import { useSettings } from "@/components/providers/SettingsProvider";
 
 // Three.js + react-three-fiber + drei together are ~150KB of JS to parse,
 // plus a continuous animation loop. On low-end Android phones this is the
@@ -18,6 +19,8 @@ const Scene = dynamic(() => import("@/components/3d/Scene"), {
 });
 
 export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
+  const { home } = useSettings();
+  const [titleFirst, ...titleRest] = home.heroTitle.split(" ");
   const [showScene, setShowScene] = useState(false);
   const hasImages = heroImages.length > 0;
 
@@ -83,19 +86,16 @@ export default function Hero({ heroImages = [] }: { heroImages?: string[] }) {
         <div className="text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-xs font-semibold text-mango-700 mb-6">
             <Sparkles className="h-3.5 w-3.5" />
-            GI-ট্যাগ পাওয়া ক্ষীরসাপাত পাওয়া যাচ্ছে
+            {home.heroBadge}
           </span>
 
           <h1 className="font-display-bn text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-ink">
-            <span className="shimmer-text">চাঁপাইনবাবগঞ্জের</span> বাগান থেকে{" "}
-            <br className="hidden sm:block" />
-            সরাসরি আপনার দরজায়
+            <span className="shimmer-text">{titleFirst}</span>{" "}
+            {titleRest.join(" ")}
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-ink/70 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            গাছপাকা, কেমিক্যাল-মুক্ত, হাতে বাছাই করা আম — হিমসাগর, ল্যাংড়া,
-            ক্ষীরসাপাত, ফজলি, আম্রপালি, গোপালভোগ। ঐতিহ্যবাহী জাত থেকে হাইব্রিড,
-            সবকিছু এক জায়গায়।
+            {home.heroSubtitle}
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-4">

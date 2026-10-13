@@ -1,8 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import {
+  siteSettingsSchema,
+  type SiteSettings
+} from "@/lib/settings-schema";
+import { SETTINGS_TAG } from "@/lib/settings";
 
 // ----- Auth -----
 
@@ -521,5 +526,44 @@ export async function updateRefundPolicyAction(bodyMd: string) {
 
   revalidatePath("/admin/refund-policy");
   revalidatePath("/refund");
+  return { ok: true };
+}
+
+// ----- Site settings (brand, contact, delivery, payments, SEO) -----
+
+/**
+ * Saves the whole operator-editable settings document as the single
+ * `site_settings` row (id = 1). Validated with zod before writing, and
+ * the cache tag is revalidated so the storefront (layout metadata,
+ * footer, checkout prices, payment numbers) updates immediately.
+ */
+export async function saveSiteSettingsAction(
+  input: SiteSettings
+): Promise<{ ok?: true; error?: string }> {
+  if (!isSupabaseConfigured()) {
+    return { error: "Supabase not configured" };
+  }
+  const parsed = siteSettingsSchema.safeParse(input);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const where = issue?.path.join(".") ?? "";
+    return { error: `${issue?.message ?? "Invalid value"}${where ? ` (${where})` : ""}` };
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.from("site_settings").upsert(
+    {
+      id: 1,
+      data: parsed.data,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "id" }
+  );
+  if (error) return { error: error.message };
+
+  // Bust the cached settings + every page that depends on them.
+  revalidateTag(SETTINGS_TAG);
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/settings");
   return { ok: true };
 }

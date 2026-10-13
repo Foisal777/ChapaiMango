@@ -278,6 +278,7 @@ A full admin dashboard ships at **`/admin`** — protected by Supabase Auth.
 | New product | `/admin/products/new` | Add a new mango variety (multi-image, featured toggle) |
 | Edit product | `/admin/products/[id]/edit` | Update existing product |
 | Messages | `/admin/messages` | Read contact-form submissions, click-to-reply via email/phone, delete |
+| Site Settings | `/admin/settings` | Brand text, contact + map, social links, delivery fee / free-delivery / min order, payment methods (on/off, numbers, advance, instructions), bank account, homepage hero, SEO keywords + verification tokens. **No redeploy needed.** |
 
 The admin area uses its own sidebar layout (no public navbar) and is fully responsive — mobile sidebar opens via hamburger.
 
@@ -388,6 +389,17 @@ Customers can sign up and sign in with **either** their phone number **or** an e
 Now customers can sign up with phone+password instantly, no SMS required.
 
 > Want OTP confirmation instead? Wire up Twilio / MessageBird as the SMS provider in Supabase. The signup form already shows the right "OTP পাঠানো হয়েছে" screen when `data.session` is null, so the customer just needs to verify and then visit `/login`.
+
+### ⚙️ Site Settings from the admin panel (recommended)
+
+Almost everything below used to require editing Railway variables. It is now managed at **`/admin/settings`**:
+
+1. Run [`supabase/site-settings.sql`](./supabase/site-settings.sql) once in the Supabase SQL Editor (creates the `site_settings` table; idempotent).
+2. Open `/admin/settings`, change what you need, press **Save settings**. The storefront (metadata, footer, checkout prices, payment numbers, WhatsApp button, JSON-LD) updates immediately.
+
+Precedence per field: **value saved in admin → env var (legacy) → built-in default**. So existing Railway variables keep working until you save the matching field in the admin panel. Once a section is saved in the admin, it overrides the env var.
+
+The sections in the admin cover the env vars described in the sections below (`NEXT_PUBLIC_DELIVERY_FEE`, `NEXT_PUBLIC_PAYMENT_METHODS`, `NEXT_PUBLIC_<CODE>_NUMBER`, `NEXT_PUBLIC_BUSINESS_*`, `NEXT_PUBLIC_FACEBOOK_URL`, …). Their rules are the same.
 
 ### 🚚 Make delivery free / change the fee — without code changes
 
