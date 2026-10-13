@@ -1,48 +1,35 @@
 import { Banknote, Building2, Smartphone } from "lucide-react";
-import type { PaymentMethod } from "@/types";
 
 /**
- * Brand-coloured payment pill used on /checkout (method picker)
- * and the footer "We Accept" strip.
+ * Payment pill used on /checkout (method picker) and the footer
+ * "We Accept" strip.
  *
- * Why we render a brand-coloured text pill rather than reproducing
- * the bitmap brand artwork: bKash, Nagad, Rocket and Upay are
- * registered trademarks. The brand NAME is freely usable in
- * nominative-use ("we accept bKash") which is exactly what this
- * component expresses — a recognisable brand-coloured pill with
- * the brand wordmark and a category icon. This is the same
- * approach Daraz / Foodpanda / Pickaboo use on their checkout
- * screens.
- *
- * If the operator wants the real bitmap brand logos (because they
- * have a partnership / their own creative), they can:
- *   1. Drop a PNG (or SVG) per code into `public/payment-logos/`
- *      named `<code>.png` (e.g. `bkash.png`).
- *   2. Replace the body of this component with an <img src=...>
- *      using that path.
- * Both ends — checkout form + footer strip — pick up the swap
- * automatically because they both render through this component.
+ * If the admin uploaded / linked a logo for the method (Settings →
+ * Payments → গ্যালারি থেকে লোগো), that image is shown. Otherwise we
+ * render a brand-coloured text pill (nominative use of the brand
+ * name — the same approach Daraz/Foodpanda use). Custom methods
+ * created in admin get a mango-gradient pill with their label.
  */
 
-export const BRAND_BG: Record<PaymentMethod, string> = {
-  bkash: "bg-[#E2136E]", // bKash signature pink
-  nagad: "bg-[#EE3225]", // Nagad red
-  rocket: "bg-[#8B188F]", // Rocket purple
-  upay: "bg-[#E8B500]", // Upay yellow
-  bank: "bg-ink", // Generic ink-black
-  cod: "bg-leaf-600" // Cash green
+export const BRAND_BG: Record<string, string> = {
+  bkash: "bg-[#E2136E]",
+  nagad: "bg-[#EE3225]",
+  rocket: "bg-[#8B188F]",
+  upay: "bg-[#E8B500]",
+  bank: "bg-ink",
+  cod: "bg-leaf-600"
 };
 
-const BRAND_FG: Record<PaymentMethod, string> = {
+const BRAND_FG: Record<string, string> = {
   bkash: "text-white",
   nagad: "text-white",
   rocket: "text-white",
-  upay: "text-ink", // yellow needs dark text
+  upay: "text-ink",
   bank: "text-white",
   cod: "text-white"
 };
 
-const BRAND_LABEL: Record<PaymentMethod, string> = {
+const BRAND_LABEL: Record<string, string> = {
   bkash: "bKash",
   nagad: "Nagad",
   rocket: "Rocket",
@@ -51,49 +38,67 @@ const BRAND_LABEL: Record<PaymentMethod, string> = {
   cod: "COD"
 };
 
-function iconFor(code: PaymentMethod) {
-  switch (code) {
-    case "cod":
-      return Banknote;
-    case "bank":
-      return Building2;
-    default:
-      // bkash, nagad, rocket, upay — all MFS rails
-      return Smartphone;
-  }
+function iconFor(code: string) {
+  if (code === "cod") return Banknote;
+  if (code === "bank") return Building2;
+  return Smartphone;
 }
 
 export type PaymentBrandLogoSize = "sm" | "md" | "lg";
 
 const SIZE_CLASSES: Record<PaymentBrandLogoSize, string> = {
-  sm: "px-3 py-1.5 text-xs gap-1.5 [&_svg]:h-3.5 [&_svg]:w-3.5",
-  md: "px-4 py-2 text-sm gap-2 [&_svg]:h-4 [&_svg]:w-4",
-  lg: "px-5 py-2.5 text-base gap-2 [&_svg]:h-5 [&_svg]:w-5"
+  sm: "px-3 py-1.5 text-xs gap-1.5 [&_svg]:h-3.5 [&_svg]:w-3.5 min-h-8",
+  md: "px-4 py-2 text-sm gap-2 [&_svg]:h-4 [&_svg]:w-4 min-h-10",
+  lg: "px-5 py-2.5 text-base gap-2 [&_svg]:h-5 [&_svg]:w-5 min-h-12"
+};
+
+const IMG_SIZE: Record<PaymentBrandLogoSize, string> = {
+  sm: "max-h-5 max-w-20",
+  md: "max-h-7 max-w-28",
+  lg: "max-h-9 max-w-36"
 };
 
 export default function PaymentBrandLogo({
   code,
   size = "md",
-  className = ""
+  className = "",
+  label,
+  logoUrl
 }: {
-  code: PaymentMethod;
+  code: string;
   size?: PaymentBrandLogoSize;
   className?: string;
+  label?: string;
+  logoUrl?: string;
 }) {
+  const displayLabel = label || BRAND_LABEL[code] || code;
+  if (logoUrl) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 shadow-soft ring-1 ring-mango-200/70 transition hover:-translate-y-0.5 hover:shadow-glow ${className}`}
+        aria-label={displayLabel}
+        title={displayLabel}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoUrl} alt={displayLabel} className={`${IMG_SIZE[size]} object-contain`} loading="lazy" />
+      </span>
+    );
+  }
   const Icon = iconFor(code);
+  const isBuiltin = code in BRAND_BG;
   return (
     <span
       className={[
-        "inline-flex items-center rounded-lg font-bold shadow-soft tracking-tight",
-        BRAND_BG[code],
-        BRAND_FG[code],
+        "inline-flex items-center rounded-lg font-bold shadow-soft tracking-tight transition hover:-translate-y-0.5 hover:shadow-glow",
+        isBuiltin ? BRAND_BG[code] : "bg-mango-gradient",
+        isBuiltin ? BRAND_FG[code] : "text-ink",
         SIZE_CLASSES[size],
         className
       ].join(" ")}
-      aria-label={BRAND_LABEL[code]}
+      aria-label={displayLabel}
     >
       <Icon aria-hidden="true" />
-      {BRAND_LABEL[code]}
+      {displayLabel}
     </span>
   );
 }

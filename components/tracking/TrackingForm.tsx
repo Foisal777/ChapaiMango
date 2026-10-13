@@ -17,17 +17,18 @@ import { trackOrderAction } from "@/app/actions/tracking";
 import { formatBDT } from "@/lib/utils";
 import type { TrackedOrder } from "@/types";
 import { cn } from "@/lib/utils";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
 
-const STEPS: {
-  key: TrackedOrder["status"];
-  label: string;
-  icon: typeof Clock;
-}[] = [
-  { key: "pending", label: "অর্ডার গৃহীত", icon: Clock },
-  { key: "confirmed", label: "কনফার্ম", icon: CheckCircle2 },
-  { key: "shipped", label: "ডেলিভারিতে", icon: Truck },
-  { key: "delivered", label: "ডেলিভার্ড", icon: PackageCheck }
+const STEP_KEYS: { key: TrackedOrder["status"]; icon: typeof Clock }[] = [
+  { key: "pending", icon: Clock },
+  { key: "confirmed", icon: CheckCircle2 },
+  { key: "shipped", icon: Truck },
+  { key: "delivered", icon: PackageCheck }
 ];
+function stepsFor(d: Dictionary) {
+  return STEP_KEYS.map((s, i) => ({ ...s, label: d.track.steps[i] }));
+}
 
 /**
  * Wrapper that satisfies Next.js's requirement that any client component
@@ -43,6 +44,8 @@ export default function TrackingForm() {
 }
 
 function TrackingFormInner() {
+  const { t: d } = useLocale();
+  const STEPS = stepsFor(d);
   const search = useSearchParams();
   // Pre-fill from /orders -> "Track" link, so the customer never has to
   // hand-copy a UUID. Both id and phone are optional.
@@ -90,7 +93,7 @@ function TrackingFormInner() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-              অর্ডার আইডি *
+              {d.track.trackingId}
             </label>
             <input
               type="text"
@@ -98,15 +101,15 @@ function TrackingFormInner() {
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
               className="input-field font-mono"
-              placeholder="00000000-0000-0000-0000-000000000000"
+              placeholder="CMH-7K3QX9"
             />
             <p className="text-[11px] text-ink/40 mt-1">
-              অর্ডার কনফার্মেশনে পাওয়া পুরো UUID পেস্ট করুন (৩৬ অক্ষর)।
+              {d.track.hint}
             </p>
           </div>
           <div>
             <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-              ফোন নম্বর *
+              {d.track.phone}
             </label>
             <input
               type="tel"
@@ -128,11 +131,11 @@ function TrackingFormInner() {
         <button type="submit" disabled={pending} className="btn-primary">
           {pending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> খুঁজছি...
+              <Loader2 className="h-4 w-4 animate-spin" /> {d.track.searching}
             </>
           ) : (
             <>
-              <Search className="h-4 w-4" /> ট্র্যাক করুন
+              <Search className="h-4 w-4" /> {d.track.search}
             </>
           )}
         </button>
@@ -143,20 +146,20 @@ function TrackingFormInner() {
           <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
             <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-wider text-mango-600 font-semibold">
-                অর্ডার আইডি
+                {d.track.trackingId.replace(" *", "")}
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-mono text-xs sm:text-sm break-all">
-                  {result.id}
+                <span className="font-mono text-sm sm:text-base font-bold tracking-widest break-all">
+                  {result.tracking_id || result.id}
                 </span>
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(result.id);
-                    toast.success("আইডি কপি হয়েছে");
+                    navigator.clipboard.writeText(result.tracking_id || result.id);
+                    toast.success(d.track.copied);
                   }}
                   className="grid place-items-center h-7 w-7 rounded-full bg-white border border-mango-200 hover:bg-mango-100 shrink-0"
-                  aria-label="কপি করুন"
+                  aria-label="Copy"
                 >
                   <Copy className="h-3.5 w-3.5 text-mango-700" />
                 </button>
@@ -191,14 +194,14 @@ function TrackingFormInner() {
             <div className="flex items-center gap-3 rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-red-700">
               <XCircle className="h-5 w-5" />
               <div>
-                <div className="font-semibold">অর্ডার বাতিল করা হয়েছে</div>
+                <div className="font-semibold">{d.track.cancelled}</div>
                 <div className="text-xs opacity-80">
-                  বিস্তারিত জানতে কাস্টমার কেয়ার-এ যোগাযোগ করুন।
+                  {d.track.cancelledNote}
                 </div>
               </div>
             </div>
           ) : (
-            <Timeline activeIndex={currentStep} />
+            <Timeline activeIndex={currentStep} steps={STEPS} currentLabel={d.track.current} />
           )}
         </div>
       )}
@@ -206,7 +209,8 @@ function TrackingFormInner() {
   );
 }
 
-function Timeline({ activeIndex }: { activeIndex: number }) {
+function Timeline({ activeIndex, steps, currentLabel }: { activeIndex: number; steps: ReturnType<typeof stepsFor>; currentLabel: string }) {
+  const STEPS = steps;
   return (
     <ol className="relative ml-3 border-l-2 border-mango-200 pl-6 space-y-5">
       {STEPS.map((s, idx) => {
@@ -234,7 +238,7 @@ function Timeline({ activeIndex }: { activeIndex: number }) {
             </div>
             {idx === activeIndex && (
               <div className="text-xs text-mango-700 font-semibold">
-                বর্তমান অবস্থা
+                {currentLabel}
               </div>
             )}
           </li>

@@ -77,10 +77,10 @@ export default async function HomePage() {
       <JsonLd data={websiteJsonLd} />
       <Hero heroImages={products.flatMap((p) => p.images).slice(0, 6)} />
       <RotatingHighlights />
-      <Reveal>
+      <Reveal variant="up">
         <FeaturedMangoes products={featured.length ? featured : products} />
       </Reveal>
-      <Reveal>
+      <Reveal variant="left">
         <WhyChooseUs />
       </Reveal>
       {/* Real customer reviews. Hidden until we have at least one
@@ -90,14 +90,14 @@ export default async function HomePage() {
           calls revalidatePath("/") so new reviews appear here on the
           next render. */}
       {testimonials.length > 0 && (
-        <Reveal>
+        <Reveal variant="scale">
           <Testimonials testimonials={testimonials} />
         </Reveal>
       )}
-      <Reveal>
+      <Reveal variant="right">
         <SocialFollow />
       </Reveal>
-      <Reveal>
+      <Reveal variant="blur">
         <CTA />
       </Reveal>
     </>

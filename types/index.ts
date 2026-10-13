@@ -43,6 +43,8 @@ export type PaymentMethod =
 
 export type Order = {
   id?: string;
+  /** Short branded tracking id, e.g. CMH-7K3QX9 (see lib/tracking-id.ts). */
+  tracking_id?: string | null;
   user_id?: string | null;
   customer_name: string;
   phone: string;
@@ -126,6 +128,7 @@ export type TeamMember = {
 /** Public-safe shape returned by the `track_order` RPC. */
 export type TrackedOrder = {
   id: string;
+  tracking_id?: string | null;
   status: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
   customer_name: string;
   district: string;

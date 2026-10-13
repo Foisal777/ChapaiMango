@@ -90,7 +90,8 @@ export function envDefaultSettings(): SiteSettings {
       enabled: enabled.includes(code),
       number: numberFor[code],
       advance: advanceFor[code],
-      instructions: code === "cod" ? env("NEXT_PUBLIC_COD_INSTRUCTIONS") : ""
+      instructions: code === "cod" ? env("NEXT_PUBLIC_COD_INSTRUCTIONS") : "",
+      logoUrl: ""
     };
   }
 
@@ -130,6 +131,7 @@ export function envDefaultSettings(): SiteSettings {
     },
     payments: {
       methods,
+      customMethods: [],
       bank: {
         holder: env("NEXT_PUBLIC_BANK_HOLDER") || "MD FOISAL IQBAL",
         bankName: env("NEXT_PUBLIC_BANK_NAME") || "AB BANK",

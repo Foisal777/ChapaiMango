@@ -29,6 +29,23 @@ export type MethodSettings = {
   advance: number;
   /** Custom helper text. Blank = built-in default text. */
   instructions: string;
+  /** Optional logo image (gallery upload / URL) shown wherever the
+   *  brand pill renders — checkout picker + footer "We Accept". */
+  logoUrl: string;
+};
+
+/** A payment method the admin created from /admin/settings — no code
+ *  deploy needed. `code` is the value stored in orders.payment_method. */
+export type CustomPaymentMethod = {
+  code: string;
+  label: string;
+  enabled: boolean;
+  number: string;
+  advance: number;
+  instructions: string;
+  logoUrl: string;
+  /** Also show this method's logo in the footer "We Accept" strip. */
+  showInFooter: boolean;
 };
 
 export type BankSettings = {
@@ -72,6 +89,7 @@ export type SiteSettings = {
   payments: {
     methods: Record<PaymentMethod, MethodSettings>;
     bank: BankSettings;
+    customMethods: CustomPaymentMethod[];
   };
   home: {
     heroBadge: string;

@@ -7,12 +7,13 @@ import type { User } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { signOutCustomerAction } from "@/app/actions/auth";
 import { formatBdPhone } from "@/lib/phone";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 /**
  * User menu in the navbar.
  *
  * Logged out:
- *   - Desktop:  text pills "সাইন ইন" + "সাইন আপ"
+ *   - Desktop:  text pills "{d.nav.signIn}" + "{d.nav.signUp}"
  *   - Mobile:   compact icon-only buttons (sign-in + sign-up) so
  *               the user never has to dig into the hamburger menu
  *               to find auth.
@@ -22,6 +23,7 @@ import { formatBdPhone } from "@/lib/phone";
  *     orders, admin (if applicable), sign out.
  */
 export default function UserMenu() {
+  const { t: d } = useLocale();
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [open, setOpen] = useState(false);
@@ -78,11 +80,11 @@ export default function UserMenu() {
             menu to find the auth entry point. */}
         <Link
           href="/login"
-          aria-label="সাইন ইন"
+          aria-label="{d.nav.signIn}"
           className="inline-flex items-center justify-center sm:gap-1.5 rounded-full bg-white/70 border border-mango-200 h-9 w-9 sm:w-auto sm:px-3.5 sm:py-2 text-xs font-semibold text-mango-700 hover:bg-mango-100 transition"
         >
           <LogIn className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-          <span className="hidden sm:inline">সাইন ইন</span>
+          <span className="hidden sm:inline">{d.nav.signIn}</span>
         </Link>
         {/* Sign up: visible on sm+ only — keeps the mobile navbar
             tight (sign-up is also reachable from the sign-in page). */}
@@ -91,7 +93,7 @@ export default function UserMenu() {
           className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-mango-gradient px-3.5 py-2 text-xs font-semibold text-ink shadow-soft hover:scale-105 transition"
         >
           <UserPlus className="h-3.5 w-3.5" />
-          সাইন আপ
+          {d.nav.signUp}
         </Link>
       </div>
     );
@@ -131,7 +133,7 @@ export default function UserMenu() {
         <div className="absolute right-0 top-12 z-50 w-64 rounded-2xl glass shadow-soft p-2 origin-top-right animate-fade-up">
           <div className="px-3 py-2 border-b border-mango-200/60 mb-1">
             <div className="text-[10px] uppercase tracking-wider text-mango-600 font-semibold">
-              সাইন ইন
+              {d.nav.signIn}
             </div>
             <div className="text-sm font-semibold text-ink truncate">
               {fullName}
@@ -147,7 +149,7 @@ export default function UserMenu() {
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-ink/80 hover:bg-mango-100 hover:text-mango-700 transition"
           >
             <Package className="h-4 w-4" />
-            আমার অর্ডার
+            {d.nav.myOrders}
           </Link>
 
           {isAdmin && (
@@ -157,7 +159,7 @@ export default function UserMenu() {
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-ink/80 hover:bg-mango-100 hover:text-mango-700 transition"
             >
               <Shield className="h-4 w-4" />
-              অ্যাডমিন প্যানেল
+              {d.nav.adminPanel}
             </Link>
           )}
 
@@ -167,7 +169,7 @@ export default function UserMenu() {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-red-600 hover:bg-red-50 transition"
             >
               <LogOut className="h-4 w-4" />
-              সাইন আউট
+              {d.nav.signOut}
             </button>
           </form>
         </div>

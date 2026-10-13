@@ -8,6 +8,8 @@ import { formatBdPhone } from "@/lib/phone";
 import StatusBadge from "@/components/admin/StatusBadge";
 import OrderCardActions from "./OrderCardActions";
 import type { CartItem } from "@/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export const metadata = {
   title: "আমার অর্ডার — Chapai Mango House",
@@ -18,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 type OrderRow = {
   id: string;
+  tracking_id?: string | null;
   customer_name: string;
   phone: string;
   items: CartItem[];
@@ -31,6 +34,7 @@ type OrderRow = {
 };
 
 export default async function CustomerOrdersPage() {
+  const d = getDictionary(getLocale());
   if (!isSupabaseConfigured()) {
     return (
       <section className="container-x py-20 text-center">
@@ -45,9 +49,7 @@ export default async function CustomerOrdersPage() {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("orders")
-    .select(
-      "id,customer_name,phone,items,subtotal,delivery_fee,total,payment_method,payment_txn_id,status,created_at"
-    )
+    .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -56,12 +58,12 @@ export default async function CustomerOrdersPage() {
   return (
     <section className="container-x pt-10 pb-20">
       <div className="mb-8">
-        <p className="text-sm font-semibold text-mango-600 mb-2">━ আমার অর্ডার</p>
+        <p className="text-sm font-semibold text-mango-600 mb-2">{d.auth.ordersKicker}</p>
         <h1 className="section-title">
-          অর্ডার <span className="shimmer-text">হিস্টরি</span>
+          {d.auth.ordersTitleA} <span className="shimmer-text">{d.auth.ordersTitleB}</span>
         </h1>
         <p className="mt-3 text-sm text-ink/60">
-          সাইন ইন: {user.email || formatBdPhone(user.phone) || user.id}
+          {d.auth.signedInAs(user.email || formatBdPhone(user.phone) || user.id)}
         </p>
       </div>
 
@@ -75,14 +77,14 @@ export default async function CustomerOrdersPage() {
         <div className="glass rounded-3xl p-14 text-center">
           <Inbox className="h-16 w-16 mx-auto text-mango-400" />
           <h2 className="font-display-bn text-2xl font-bold mt-4">
-            এখনো কোনো অর্ডার নেই
+            {d.auth.noOrders}
           </h2>
           <p className="mt-2 text-ink/60">
-            আপনার প্রথম অর্ডার দিতে শপ থেকে আম বেছে নিন।
+            {d.auth.noOrdersDesc}
           </p>
           <Link href="/products" className="btn-primary mt-6 inline-flex">
             <ShoppingBag className="h-4 w-4" />
-            শপ দেখুন
+            {d.cart.browse}
           </Link>
         </div>
       ) : (
@@ -95,16 +97,10 @@ export default async function CustomerOrdersPage() {
                 <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
                   <div className="min-w-0">
                     <div className="text-[11px] uppercase tracking-wider text-mango-600 font-semibold">
-                      অর্ডার আইডি
+                      ট্র্যাকিং আইডি
                     </div>
-                    {/*
-                     * Show the FULL UUID, not just the first 8 chars.
-                     * The tracking RPC requires the full id, so customers
-                     * were copying #cfc037af and confused why it didn't
-                     * work. break-all keeps it inside the card on mobile.
-                     */}
-                    <div className="font-mono text-[11px] sm:text-xs text-ink mt-0.5 break-all leading-snug">
-                      {o.id}
+                    <div className="font-mono text-base sm:text-lg font-bold tracking-widest text-ink mt-0.5 break-all leading-snug">
+                      {o.tracking_id || o.id}
                     </div>
                     <div className="text-xs text-ink/50 mt-1">
                       {new Date(o.created_at).toLocaleString("en-BD", {
@@ -152,7 +148,7 @@ export default async function CustomerOrdersPage() {
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-ink/60">
                     <span>
                       <span className="font-semibold text-ink/80">
-                        পেমেন্ট:
+                        {d.auth.payment}
                       </span>{" "}
                       <span className="uppercase">{o.payment_method}</span>
                     </span>
@@ -164,9 +160,9 @@ export default async function CustomerOrdersPage() {
                         <span className="font-mono">{o.payment_txn_id}</span>
                       </span>
                     )}
-                    <span>{itemCount}টি পণ্য</span>
+                    <span>{d.auth.itemsCount(itemCount, getLocale())}</span>
                     <span>
-                      <span className="font-semibold text-ink/80">ফোন:</span>{" "}
+                      <span className="font-semibold text-ink/80">{d.auth.phoneLabel}</span>{" "}
                       {o.phone}
                     </span>
                   </div>

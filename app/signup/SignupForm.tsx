@@ -6,8 +6,10 @@ import { CheckCircle2, Loader2, UserPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { useLocale } from "@/components/providers/LocaleProvider";
 
 export default function SignupForm() {
+  const { t: d } = useLocale();
   const search = useSearchParams();
   const next = search.get("next") || "/orders";
 
@@ -23,7 +25,7 @@ export default function SignupForm() {
     e.preventDefault();
     setError(null);
     if (password.length < 6) {
-      setError("পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে");
+      setError(d.auth.passwordMin);
       return;
     }
     setLoading(true);
@@ -42,21 +44,21 @@ export default function SignupForm() {
 
       if (signUpError) {
         setError(signUpError.message);
-        toast.error("সাইন আপ করতে পারিনি");
+        toast.error(d.auth.genericError);
         return;
       }
 
       // If email confirmation is required, the user is returned but session is null.
       // If confirmation is off, session is set and we can proceed straight in.
       if (data.session) {
-        toast.success("অ্যাকাউন্ট তৈরি! স্বাগতম।");
+        toast.success(d.auth.accountCreated);
         window.location.href = next;
       } else {
         setDone({ needsConfirm: true });
       }
     } catch (err) {
       console.error(err);
-      setError("কিছু ভুল হয়েছে। আবার চেষ্টা করুন।");
+      setError(d.auth.genericError);
     } finally {
       setLoading(false);
     }
@@ -70,7 +72,7 @@ export default function SignupForm() {
           অ্যাকাউন্ট তৈরি হয়েছে!
         </h2>
         <p className="mt-2 text-sm text-ink/70">
-          আপনার ইমেইলে একটি কনফার্মেশন লিঙ্ক পাঠানো হয়েছে।{" "}
+          {d.auth.checkEmail}{" "}
           <strong>{email}</strong> চেক করুন এবং লিঙ্কে ক্লিক করুন। তারপর{" "}
           <a href="/login" className="text-mango-700 underline">
             সাইন ইন
@@ -83,7 +85,7 @@ export default function SignupForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <GoogleSignInButton next={next} label="Google দিয়ে সাইন আপ" />
+      <GoogleSignInButton next={next} label={d.auth.googleSignup} />
 
       <div className="relative my-1">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -98,7 +100,7 @@ export default function SignupForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          পূর্ণ নাম *
+          {d.auth.fullName}
         </label>
         <input
           type="text"
@@ -128,7 +130,7 @@ export default function SignupForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          ইমেইল *
+          {d.auth.email} *
         </label>
         <input
           type="email"
@@ -143,7 +145,7 @@ export default function SignupForm() {
 
       <div>
         <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-          পাসওয়ার্ড * <span className="font-normal text-ink/40">(৬+ অক্ষর)</span>
+          {d.auth.password} *
         </label>
         <input
           type="password"

@@ -41,8 +41,8 @@ export default async function AdminOrderDetailPage({
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold">
             Order{" "}
-            <span className="font-mono text-mango-700 text-xl">
-              #{order.id.slice(0, 8)}
+            <span className="font-mono text-mango-700 text-xl tracking-widest">
+              {(order as { tracking_id?: string | null }).tracking_id || `#${order.id.slice(0, 8)}`}
             </span>
           </h1>
           <div className="flex items-center gap-2 mt-2">

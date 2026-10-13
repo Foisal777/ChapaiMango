@@ -29,7 +29,8 @@ export type BankAccountInfo = {
 };
 
 export type PaymentMethodInfo = {
-  code: PaymentMethod;
+  /** Built-in code (cod/bkash/…) or an admin-created custom code. */
+  code: string;
   /** Bangla label shown on the checkout card. */
   label: string;
   /** Single-line summary for receipts / track-order. */
@@ -38,6 +39,10 @@ export type PaymentMethodInfo = {
   advance: number;
   /** Helper text shown under the selected card. */
   instructions: string;
+  /** Optional logo (gallery upload / URL) for checkout + footer. */
+  logoUrl?: string;
+  /** Custom methods: also listed in the footer "We Accept" strip. */
+  showInFooter?: boolean;
   /** Structured bank details, present ONLY when code === 'bank'. */
   bankDetails?: BankAccountInfo;
 };
@@ -114,10 +119,24 @@ export function formatBankSummary(info: BankAccountInfo): string {
 /** Full info bundle for a single payment method. */
 export function paymentMethodInfo(
   p: PaymentSettings,
-  code: PaymentMethod
+  code: string
 ): PaymentMethodInfo {
-  const def = METHOD_DEFAULTS[code];
-  const m = p.methods[code];
+  const custom = (p.customMethods ?? []).find((m) => m.code === code);
+  if (custom) {
+    return {
+      code: custom.code,
+      label: custom.label,
+      accountNumber: (custom.number || "").trim(),
+      advance: custom.advance ?? 0,
+      instructions: (custom.instructions || "").trim() ||
+        "উপরের নম্বরে/অ্যাকাউন্টে পেমেন্ট করুন → TrxID + sender number ফর্মে দিন।",
+      logoUrl: custom.logoUrl || undefined,
+      showInFooter: custom.showInFooter
+    };
+  }
+  const builtin = code as PaymentMethod;
+  const def = METHOD_DEFAULTS[builtin] ?? METHOD_DEFAULTS.cod;
+  const m = p.methods[builtin];
   const override = (m?.instructions || "").trim();
   const advance = m?.advance ?? 0;
 
@@ -149,27 +168,30 @@ export function paymentMethodInfo(
   };
 }
 
-/** All ENABLED methods, in the canonical checkout order. */
+/** All ENABLED methods: built-ins in canonical order, then admin-created customs. */
 export function getEnabledPaymentMethodsInfo(
   p: PaymentSettings
 ): PaymentMethodInfo[] {
-  return PAYMENT_METHOD_CODES.filter((c) => p.methods[c]?.enabled).map((c) =>
+  const builtins = PAYMENT_METHOD_CODES.filter((c) => p.methods[c]?.enabled).map((c) =>
     paymentMethodInfo(p, c)
   );
+  const customs = (p.customMethods ?? []).filter((m) => m.enabled).map((m) => paymentMethodInfo(p, m.code));
+  return [...builtins, ...customs];
 }
 
 export function isPaymentMethodEnabled(
   p: PaymentSettings,
-  method: PaymentMethod
+  method: string
 ): boolean {
-  return Boolean(p.methods[method]?.enabled);
+  if ((PAYMENT_METHOD_CODES as string[]).includes(method)) {
+    return Boolean(p.methods[method as PaymentMethod]?.enabled);
+  }
+  return Boolean((p.customMethods ?? []).find((m) => m.code === method)?.enabled);
 }
 
 /** First enabled payment method — used as the form default. */
-export function defaultPaymentMethod(p: PaymentSettings): PaymentMethod {
-  return (
-    PAYMENT_METHOD_CODES.find((c) => p.methods[c]?.enabled) ?? "cod"
-  );
+export function defaultPaymentMethod(p: PaymentSettings): string {
+  return getEnabledPaymentMethodsInfo(p)[0]?.code ?? "cod";
 }
 
 /**

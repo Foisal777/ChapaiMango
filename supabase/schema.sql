@@ -30,6 +30,7 @@ create index if not exists idx_products_slug on public.products(slug);
 -- ---------- Orders ----------
 create table if not exists public.orders (
   id                    uuid primary key default gen_random_uuid(),
+  tracking_id           text unique, -- CMH-XXXXXX, filled by trigger in cmh-tracking-and-storage.sql
   customer_name         text not null,
   phone                 text not null,
   email                 text,

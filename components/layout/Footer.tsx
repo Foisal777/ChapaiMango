@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
 import AcceptedPayments from "@/components/social/AcceptedPayments";
 import { getSiteSettings } from "@/lib/settings";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 // Inline TikTok logo (lucide doesn't ship one)
 function TikTokIcon({ className }: { className?: string }) {
@@ -18,6 +20,7 @@ function TikTokIcon({ className }: { className?: string }) {
 }
 
 export default async function Footer() {
+  const d = getDictionary(getLocale());
   const { brand, contact, social } = await getSiteSettings();
   const phone = contact.phone;
   const email = contact.email;
@@ -35,8 +38,7 @@ export default async function Footer() {
             </span>
           </div>
           <p className="text-ink/70 text-sm max-w-md leading-relaxed">
-            চাঁপাইনবাবগঞ্জের গাছপাকা, কেমিক্যাল-মুক্ত আম — সরাসরি আপনার দরজায়।
-            ঐতিহ্যবাহী জাত থেকে হাইব্রিড, সবকিছু এখানে এক জায়গায়।
+            {d.footer.tagline}
           </p>
 
           {/*
@@ -47,14 +49,14 @@ export default async function Footer() {
            */}
           <div className="mt-6">
             <p className="text-xs uppercase tracking-wider text-mango-700 font-bold mb-3">
-              আমাদের ফলো করুন
+              {d.footer.followUs}
             </p>
             <div className="flex flex-wrap gap-3">
               <a
                 href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Facebook এ ফলো করুন"
+                aria-label="Facebook"
                 className="group inline-flex items-center gap-2.5 rounded-full bg-[#1877F2] px-5 py-3 text-sm font-semibold text-white shadow-soft hover:scale-105 hover:shadow-glow transition"
               >
                 <Facebook className="h-5 w-5 fill-white" />
@@ -64,7 +66,7 @@ export default async function Footer() {
                 href={tiktokUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="TikTok এ ফলো করুন"
+                aria-label="TikTok"
                 className="group inline-flex items-center gap-2.5 rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-soft hover:scale-105 hover:shadow-glow transition"
               >
                 <TikTokIcon className="h-5 w-5" />
@@ -76,47 +78,47 @@ export default async function Footer() {
 
         <div>
           <h4 className="font-display-bn text-lg font-semibold mb-4">
-            অন্বেষণ
+            {d.footer.explore}
           </h4>
           <ul className="space-y-2 text-sm text-ink/70">
             <li>
               <Link href="/" className="hover:text-mango-700">
-                হোম
+                {d.nav.home}
               </Link>
             </li>
             <li>
               <Link href="/products" className="hover:text-mango-700">
-                শপ
+                {d.nav.shop}
               </Link>
             </li>
             <li>
               <Link href="/track" className="hover:text-mango-700">
-                অর্ডার ট্র্যাক
+                {d.footer.track}
               </Link>
             </li>
             <li>
               <Link href="/about" className="hover:text-mango-700">
-                আমাদের সম্পর্কে
+                {d.nav.about}
               </Link>
             </li>
             <li>
               <Link href="/team" className="hover:text-mango-700">
-                আমাদের টিম
+                {d.nav.team}
               </Link>
             </li>
             <li>
               <Link href="/contact" className="hover:text-mango-700">
-                যোগাযোগ
+                {d.footer.contact}
               </Link>
             </li>
             <li>
               <Link href="/privacy" className="hover:text-mango-700">
-                প্রাইভেসি পলিসি
+                {d.footer.privacy}
               </Link>
             </li>
             <li>
               <Link href="/refund" className="hover:text-mango-700">
-                রিফান্ড পলিসি
+                {d.footer.refund}
               </Link>
             </li>
           </ul>
@@ -124,7 +126,7 @@ export default async function Footer() {
 
         <div>
           <h4 className="font-display-bn text-lg font-semibold mb-4">
-            যোগাযোগ
+            {d.footer.contact}
           </h4>
           <ul className="space-y-3 text-sm text-ink/70">
             <li className="flex items-start gap-2">
@@ -150,7 +152,7 @@ export default async function Footer() {
       <div className="border-t border-mango-200/50">
         <div className="container-x py-5 flex flex-wrap items-center justify-between gap-3 text-xs text-ink/60">
           <div>
-            © {new Date().getFullYear()} Chapai Mango House · বাংলাদেশে তৈরি 🥭
+            © {new Date().getFullYear()} Chapai Mango House · {d.footer.madeIn} 🥭
           </div>
           <div>
             Developed by{" "}

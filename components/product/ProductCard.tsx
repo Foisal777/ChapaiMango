@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import { formatBDT } from "@/lib/utils";
 import type { Mango } from "@/types";
+import { getDictionary, num, type Locale } from "@/lib/i18n";
 
 /**
  * Product card used on the home page and the /products grid.
@@ -13,9 +14,10 @@ import type { Mango } from "@/types";
  * /products page (and every home-page card) to ship framer-motion.
  * Pure CSS hover-translate gives the same effect for free.
  */
-export default function ProductCard({ product }: { product: Mango }) {
+export default function ProductCard({ product, locale = "bn" }: { product: Mango; locale?: Locale }) {
+  const d = getDictionary(locale);
   return (
-    <div className="group relative overflow-hidden rounded-3xl glass hover:shadow-glow hover:-translate-y-1.5 transition-all duration-300">
+    <div className="group card-shine relative overflow-hidden rounded-3xl glass hover:shadow-glow hover:-translate-y-2 hover:rotate-[0.2deg] transition-all duration-500">
       <Link href={`/products/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-mango-100">
           <Image
@@ -27,12 +29,12 @@ export default function ProductCard({ product }: { product: Mango }) {
           />
           {product.is_featured && (
             <span className="absolute top-3 left-3 rounded-full bg-mango-gradient px-3 py-1 text-[11px] font-semibold text-ink shadow-glow">
-              বিশেষ
+              {d.shop.featured}
             </span>
           )}
           <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-mango-700">
             <Star className="h-3 w-3 fill-mango-500 text-mango-500" />
-            {product.rating.toFixed(1)}
+            {num(product.rating.toFixed(1), locale)}
           </span>
         </div>
         <div className="p-5">
@@ -50,10 +52,10 @@ export default function ProductCard({ product }: { product: Mango }) {
               <div className="font-display-bn text-xl sm:text-2xl font-bold text-mango-700">
                 {formatBDT(product.price_per_kg)}
               </div>
-              <div className="text-[11px] text-ink/50">প্রতি কেজি</div>
+              <div className="text-[11px] text-ink/50">{d.common.perKg}</div>
             </div>
             <span className="rounded-full bg-mango-gradient px-4 py-2 text-xs font-semibold text-ink shadow-soft group-hover:scale-105 transition">
-              দেখুন
+              {d.shop.view}
             </span>
           </div>
         </div>

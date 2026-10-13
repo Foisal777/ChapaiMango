@@ -1,5 +1,7 @@
 import { Quote, Star } from "lucide-react";
 import type { Testimonial } from "@/types";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 /**
  * Customer testimonials strip.
@@ -16,14 +18,15 @@ export default function Testimonials({
 }: {
   testimonials: Testimonial[];
 }) {
+  const d = getDictionary(getLocale());
   return (
     <section className="container-x py-20 sm:py-24">
       <div className="text-center mb-12 max-w-2xl mx-auto">
         <p className="text-sm font-semibold text-mango-600 mb-2">
-          ━ গ্রাহকের মতামত
+          {d.home.testimonialsKicker}
         </p>
         <h2 className="section-title">
-          মানুষ কী <span className="shimmer-text">বলছে</span>
+          {d.home.testimonialsTitleA} <span className="shimmer-text">{d.home.testimonialsTitleB}</span>
         </h2>
       </div>
 

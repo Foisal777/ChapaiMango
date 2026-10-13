@@ -130,16 +130,65 @@ body {
  * but the element is fully painted from t=0.
  */
 .page-enter {
-  animation: page-enter-translate 0.5s ease-out;
+  animation: page-enter-translate 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes page-enter-translate {
   from {
-    transform: translateY(8px);
+    opacity: 0.35;
+    transform: translateY(14px) scale(0.998);
+    filter: blur(3px);
   }
   to {
-    transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: none;
   }
 }
+
+/* ── Professional micro-interactions (CSS-only, zero JS) ────────── */
+::selection { background: #ffb01f; color: #1a0f00; }
+:focus-visible { outline: 2px solid #f59100; outline-offset: 2px; border-radius: 6px; }
+
+.hover-lift { transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s; }
+.hover-lift:hover { transform: translateY(-4px); box-shadow: 0 22px 45px -18px rgba(122,63,13,.38); }
+
+.btn-primary, .btn-ghost { position: relative; overflow: hidden; }
+.btn-primary::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  transform: translateX(-120%); transition: transform .7s ease; pointer-events: none;
+}
+.btn-primary:hover::after { transform: translateX(120%); }
+.btn-primary:hover { box-shadow: 0 0 60px -10px rgba(245,145,0,.55), 0 18px 35px -15px rgba(122,63,13,.4); }
+
+.nav-link { position: relative; }
+.nav-link::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 2px; border-radius: 99px;
+  background: linear-gradient(135deg,#f59100,#ffdc80); transform: scaleX(0); transform-origin: left; transition: transform .35s cubic-bezier(.22,1,.36,1);
+}
+.nav-link:hover::after, .nav-link.is-active::after { transform: scaleX(1); }
+
+.payment-card { transition: transform .3s cubic-bezier(.22,1,.36,1), border-color .3s, box-shadow .3s; }
+.payment-card:hover { transform: translateY(-3px) scale(1.015); }
+
+.card-shine { position: relative; overflow: hidden; }
+.card-shine::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%);
+  transform: translateX(-130%); transition: transform .8s ease;
+}
+.card-shine:hover::before { transform: translateX(130%); }
+
+.scroll-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 60;
+  background: linear-gradient(90deg,#d97606,#ffb01f,#ffdc80);
+  transform-origin: left; pointer-events: none;
+}
+
+.marquee-track:hover { animation-play-state: paused; }
+input, select, textarea { transition: border-color .25s, box-shadow .25s, transform .25s; }
+.input-field:hover { border-color: #ffc94d; }
+.input-field:focus { transform: translateY(-1px); }
 @media (prefers-reduced-motion: reduce) {
   .page-enter {
     animation: none;

@@ -13,6 +13,8 @@ import {
 } from "@/lib/data";
 import { formatBDT } from "@/lib/utils";
 import { getSiteUrl, SITE } from "@/lib/site";
+import { getDictionary, num } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 export async function generateStaticParams() {
   const products = await getProducts();
@@ -69,6 +71,8 @@ export default async function ProductDetailPage({
 }) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
+  const locale = getLocale();
+  const d = getDictionary(locale);
 
   // Pull live rating stats so JSON-LD reflects real reviews. The DB
   // trigger keeps `products.rating` and `products.review_count` in
@@ -150,7 +154,7 @@ export default async function ProductDetailPage({
         href="/products"
         className="inline-flex items-center gap-1 text-sm text-mango-700 hover:gap-2 transition-all mb-6"
       >
-        <ChevronLeft className="h-4 w-4" /> শপে ফিরে যান
+        <ChevronLeft className="h-4 w-4" /> {d.common.backToShop}
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-14">
@@ -170,19 +174,19 @@ export default async function ProductDetailPage({
               <span className="font-semibold">
                 {ratingStats.average.toFixed(1)}
               </span>
-              <span className="text-ink/50">/ ৫</span>
+              <span className="text-ink/50">/ {num(5, locale)}</span>
               {ratingStats.count > 0 && (
                 <a
                   href="#reviews"
                   className="ml-1 text-ink/50 hover:text-mango-700 underline-offset-2 hover:underline"
                 >
-                  ({ratingStats.count}টি রিভিউ)
+                  {d.product.reviewsCount(ratingStats.count, locale)}
                 </a>
               )}
             </span>
             <span className="text-ink/40">·</span>
             <span className="text-ink/60">
-              স্টক: {product.stock_kg} কেজি
+              {d.product.stock(product.stock_kg, locale)}
             </span>
           </div>
 
@@ -190,7 +194,7 @@ export default async function ProductDetailPage({
             <span className="font-display-bn text-3xl sm:text-4xl lg:text-5xl font-bold text-mango-700">
               {formatBDT(product.price_per_kg)}
             </span>
-            <span className="text-ink/50 mb-2">/ কেজি</span>
+            <span className="text-ink/50 mb-2">/ {d.common.kg}</span>
           </div>
 
           <p className="mt-5 text-ink/75 leading-relaxed">
@@ -200,18 +204,18 @@ export default async function ProductDetailPage({
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Info
               icon={<MapPin className="h-4 w-4" />}
-              label="উৎপত্তি"
+              label={d.product.origin}
               value={product.origin}
             />
             <Info
               icon={<Calendar className="h-4 w-4" />}
-              label="মৌসুম"
+              label={d.product.season}
               value={product.season}
             />
             <Info
               icon={<Leaf className="h-4 w-4" />}
-              label="মান"
-              value="কেমিক্যাল-মুক্ত"
+              label={d.product.quality}
+              value={d.product.chemicalFree}
             />
           </div>
 
@@ -220,9 +224,7 @@ export default async function ProductDetailPage({
           </div>
 
           <div className="mt-6 glass rounded-2xl p-4 text-xs text-ink/70 leading-relaxed">
-            <strong className="text-ink">ডেলিভারি:</strong> ঢাকার ভেতরে ২৪
-            ঘণ্টা · বাংলাদেশের সব জেলায় ৪৮–৭২ ঘণ্টা · অর্ডার কনফার্মেশনের পর
-            SMS / কল পাবেন।
+            <strong className="text-ink">{d.product.deliveryNoteTitle}</strong> {d.product.deliveryNote}
           </div>
         </div>
       </div>

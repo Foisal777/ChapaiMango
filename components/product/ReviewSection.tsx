@@ -3,6 +3,8 @@ import { MessageCircle, Star } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getProductReviews, getProductRatingStats } from "@/lib/data";
 import ReviewForm from "./ReviewForm";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n-server";
 
 /**
  * Server component that renders:
@@ -21,6 +23,8 @@ export default async function ReviewSection({
   productId: string;
   productSlug: string;
 }) {
+  const locale = getLocale();
+  const d = getDictionary(locale);
   const [user, reviews, stats] = await Promise.all([
     getCurrentUser(),
     getProductReviews(productId),
@@ -37,12 +41,12 @@ export default async function ReviewSection({
     <section className="container-x pb-20 pt-2" id="reviews">
       <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-sm font-semibold text-mango-600 mb-1">━ রিভিউ</p>
+          <p className="text-sm font-semibold text-mango-600 mb-1">{d.reviews.kicker}</p>
           <h2 className="section-title">
-            ক্রেতাদের <span className="shimmer-text">মতামত</span>
+            {d.reviews.titleA} <span className="shimmer-text">{d.reviews.titleB}</span>
           </h2>
         </div>
-        <RatingSummary average={stats.average} count={stats.count} />
+        <RatingSummary average={stats.average} count={stats.count} label={stats.count > 0 ? d.reviews.count(stats.count, locale) : d.reviews.ratingNone} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -52,10 +56,10 @@ export default async function ReviewSection({
             <div className="glass rounded-3xl p-10 text-center">
               <MessageCircle className="h-12 w-12 mx-auto text-mango-400" />
               <p className="mt-3 font-display-bn text-lg font-bold">
-                এখনো কোনো রিভিউ নেই
+                {d.reviews.noReviews.split(' — ')[0]}
               </p>
               <p className="text-sm text-ink/60 mt-1">
-                প্রথম রিভিউটা আপনিই দিন!
+                {d.reviews.first}
               </p>
             </div>
           ) : (
@@ -94,26 +98,25 @@ export default async function ReviewSection({
           {!user ? (
             <div className="glass rounded-3xl p-6 text-center">
               <h3 className="font-display-bn text-lg font-bold">
-                রিভিউ দিতে সাইন ইন করুন
+                {d.reviews.signInToReview}
               </h3>
               <p className="text-sm text-ink/60 mt-2">
-                আপনার অভিজ্ঞতা অন্যদের সাহায্য করবে। ফোন/ইমেইল বা Google
-                দিয়ে সাইন ইন করুন।
+{d.reviews.signInNote}
               </p>
               <Link
                 href={`/login?next=/products/${productSlug}%23reviews`}
                 className="btn-primary mt-4 inline-flex"
               >
-                সাইন ইন
+                {d.nav.signIn}
               </Link>
             </div>
           ) : ownReview ? (
             <div className="glass rounded-3xl p-6 text-center">
               <h3 className="font-display-bn text-lg font-bold">
-                ধন্যবাদ!
+                {d.reviews.alreadyTitle}
               </h3>
               <p className="text-sm text-ink/60 mt-2">
-                আপনি ইতিমধ্যে এই আমের জন্য রিভিউ দিয়েছেন।
+                {d.reviews.already}
               </p>
             </div>
           ) : (
@@ -127,11 +130,14 @@ export default async function ReviewSection({
 
 function RatingSummary({
   average,
-  count
+  count,
+  label
 }: {
   average: number;
   count: number;
+  label: string;
 }) {
+  void count;
   return (
     <div className="glass rounded-2xl px-5 py-3 flex items-center gap-3">
       <Star className="h-6 w-6 fill-mango-500 text-mango-500" />
@@ -140,7 +146,7 @@ function RatingSummary({
           {average.toFixed(1)}
         </div>
         <div className="text-[11px] text-ink/60">
-          {count > 0 ? `${count}টি রিভিউ` : "এখনো রেটিং সেট"}
+          {label}
         </div>
       </div>
     </div>
