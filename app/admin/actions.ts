@@ -412,9 +412,20 @@ function sanitiseTeamMember(input: TeamMemberInput) {
     ? input.role
     : "member";
 
+  // Photo may be a remote/public URL OR an inline data-URL — the
+  // gallery picker (components/admin/ImageUploadField) uploads to the
+  // `site-images` Supabase Storage bucket when it exists and falls
+  // back to a compressed JPEG data-URL otherwise (see
+  // lib/upload-image.ts). Data-URLs are capped so a stray 50 MB
+  // blob can't bloat the row.
   const photo = (input.photo_url || "").trim();
-  if (photo && !/^https?:\/\//i.test(photo)) {
-    return { error: "Photo URL must start with http:// or https://" };
+  const photoOk =
+    photo === "" ||
+    /^https?:\/\//i.test(photo) ||
+    (/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(photo) &&
+      photo.length <= 2_000_000);
+  if (!photoOk) {
+    return { error: "Photo must be an http(s) URL or a gallery upload" };
   }
 
   const fb = (input.facebook_url || "").trim();

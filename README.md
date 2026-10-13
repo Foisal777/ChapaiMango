@@ -327,6 +327,8 @@ Customers must now **sign up / sign in** before they can place an order, and the
 |---|---|
 | `/signup` | Create a customer account (full name, phone, email, password) |
 | `/login` | Sign in with email + password (auto-redirects to `/orders` or `?next=`) |
+| `/forgot-password` | Request a password-reset email ("পাসওয়ার্ড ভুলে গেছেন?" link on /login + /admin/login) |
+| `/reset-password` | Set the new password (opened from the email's reset link) |
 | `/orders` | The signed-in customer's personal order history |
 
 The navbar shows a **circular initial avatar** when signed in. Tapping it opens a menu with:
@@ -389,6 +391,26 @@ Customers can sign up and sign in with **either** their phone number **or** an e
 Now customers can sign up with phone+password instantly, no SMS required.
 
 > Want OTP confirmation instead? Wire up Twilio / MessageBird as the SMS provider in Supabase. The signup form already shows the right "OTP পাঠানো হয়েছে" screen when `data.session` is null, so the customer just needs to verify and then visit `/login`.
+
+### 🔑 Forgot / Reset password
+
+There is a full forgot-password flow (works for **customers and admins** — both sign in with email + password):
+
+1. **`/login`** (or `/admin/login`) → tap **"পাসওয়ার্ড ভুলে গেছেন?"**
+2. **`/forgot-password`** → enter the sign-up email → **রিসেট লিঙ্ক পাঠান**
+3. Supabase emails a reset link (the same "check your email" UX as signup)
+4. The link lands on `/auth/callback?next=/reset-password`, which exchanges the code for a session, then opens **`/reset-password`**
+5. User picks a new password (min 6 chars, must match confirm) → **পাসওয়ার্ড আপডেট করুন** → sign in again
+
+**One-time Supabase setup (only if you haven't set up Google OAuth yet):** the reset link redirects to `/auth/callback`, so that path must be an allowed redirect URL.
+
+1. Supabase Dashboard → **Authentication → URL Configuration**
+2. Add **`https://your-domain.com/auth/callback`** (replace with your real domain) under **Redirect URLs** (Site URL is separate — leave it as your domain root).
+
+Notes:
+- Supabase's free email service rate-limits reset emails to **2 per hour** per address — the success screen warns about this and points to the Spam folder.
+- Password reset is **email-based** (Supabase auth limitation). A phone-only account with no email can't receive the link; ask them to add an email or sign in with Google if enabled.
+- Expiration: reset links use Supabase's default recovery-token expiry (1 hour). An expired link shows the "লিঙ্কটি বৈধ নয়" state with a button to request a fresh one.
 
 ### ⚙️ Site Settings from the admin panel (recommended)
 
@@ -486,6 +508,9 @@ Checkout keeps working even before this runs (it falls back to inserting without
 
 ### 📸 Product photos straight from the gallery
 **Admin → Products → Add/Edit** — "গ্যালারি থেকে ছবি বেছে নিন" opens the phone/computer gallery (multi-select + drag & drop). Photos are compressed (max 1400px), uploaded to `site-images`, first photo = cover (star any photo to make it cover). Pasting a URL still works as a fallback. If the bucket doesn't exist yet, the compressed photo is stored inline so the flow never blocks.
+
+### 👥 Team member photos from the gallery
+**Admin → Team → Add/Edit** — the Photo field now has a **"গ্যালারি থেকে ছবি"** button (same upload pipeline as products: compress → `site-images/team` → inline fallback). Pasting a public URL still works too. The photo shows on the admin list and the public `/team` page.
 
 ### 💳 New payment methods + logos (no code / no deploy)
 **Admin → Settings → Payments**:

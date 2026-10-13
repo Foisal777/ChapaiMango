@@ -182,7 +182,31 @@ const bn = {
     signingIn: "সাইন ইন হচ্ছে...", welcome: "স্বাগতম!", fullName: "পূর্ণ নাম *",
     passwordMin: "পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে", accountCreated: "অ্যাকাউন্ট তৈরি! স্বাগতম।",
     checkEmail: "আপনার ইমেইলে একটি কনফার্মেশন লিঙ্ক পাঠানো হয়েছে।",
-    genericError: "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।", googleSignup: "Google দিয়ে সাইন আপ"
+    genericError: "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।", googleSignup: "Google দিয়ে সাইন আপ",
+    forgotLink: "পাসওয়ার্ড ভুলে গেছেন?",
+    forgotTitle: "পাসওয়ার্ড রিসেট করুন",
+    forgotDesc: "আপনার সাইন-আপ ইমেইল ঠিকানা দিন — আমরা সেই ইমেইলে একটি পাসওয়ার্ড রিসেট লিঙ্ক পাঠিয়ে দেব।",
+    forgotBtn: "রিসেট লিঙ্ক পাঠান",
+    forgotSending: "পাঠানো হচ্ছে...",
+    forgotSuccessTitle: "ইমেইল চেক করুন!",
+    forgotSuccessDesc: (email: string) =>
+      `${email}-এ পাসওয়ার্ড রিসেট লিঙ্ক পাঠানো হয়েছে। লিঙ্কে ক্লিক করে নতুন পাসওয়ার্ড সেট করুন।`,
+    forgotSpamNote:
+      "ইমেইল আসছে না? Spam / Promotions ফোল্ডার চেক করুন। প্রতি ১ ঘণ্টায় সর্বোচ্চ ২টি রিসেট ইমেইল পাঠানো যায়।",
+    forgotBackToLogin: "সাইন ইন পেজে ফিরে যান",
+    resetTitle: "নতুন পাসওয়ার্ড সেট করুন",
+    resetDesc: "নতুন পাসওয়ার্ড দিন — অন্তত ৬ অক্ষরের হতে হবে।",
+    newPassword: "নতুন পাসওয়ার্ড *",
+    confirmPassword: "পাসওয়ার্ড কনফার্ম করুন *",
+    passwordMismatch: "দুটি পাসওয়ার্ড মিলছে না",
+    resetBtn: "পাসওয়ার্ড আপডেট করুন",
+    resetSending: "আপডেট হচ্ছে...",
+    resetSuccessTitle: "পাসওয়ার্ড আপডেট হয়েছে!",
+    resetSuccessDesc: "এখন নতুন পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+    invalidLinkTitle: "লিঙ্কটি বৈধ নয়",
+    invalidLinkDesc:
+      "রিসেট লিঙ্কটি এক্সপায়ারড বা অসম্পূর্ণ। নতুন লিঙ্ক চাইলে নিচের লিংকে ক্লিক করুন।",
+    requestNewLink: "নতুন রিসেট লিঙ্ক চান"
   },
   contact: {
     kicker: "━ যোগাযোগ", titleA: "আমাদের", titleB: "যোগাযোগ করুন",
@@ -403,7 +427,31 @@ const en: Dictionary = {
     signingIn: "Signing in...", welcome: "Welcome!", fullName: "Full name *",
     passwordMin: "Password must be at least 6 characters", accountCreated: "Account created! Welcome.",
     checkEmail: "A confirmation link has been sent to your email.",
-    genericError: "Something went wrong. Please try again.", googleSignup: "Sign up with Google"
+    genericError: "Something went wrong. Please try again.", googleSignup: "Sign up with Google",
+    forgotLink: "Forgot your password?",
+    forgotTitle: "Reset your password",
+    forgotDesc: "Enter the email you signed up with — we'll send a password reset link to that inbox.",
+    forgotBtn: "Send reset link",
+    forgotSending: "Sending...",
+    forgotSuccessTitle: "Check your email!",
+    forgotSuccessDesc: (email: string) =>
+      `A password reset link has been sent to ${email}. Click it to set a new password.`,
+    forgotSpamNote:
+      "Didn't get it? Check your Spam / Promotions folder. A maximum of 2 reset emails can be sent per hour.",
+    forgotBackToLogin: "Back to sign in",
+    resetTitle: "Set a new password",
+    resetDesc: "Choose a new password — at least 6 characters.",
+    newPassword: "New password *",
+    confirmPassword: "Confirm password *",
+    passwordMismatch: "The two passwords don't match",
+    resetBtn: "Update password",
+    resetSending: "Updating...",
+    resetSuccessTitle: "Password updated!",
+    resetSuccessDesc: "Now sign in with your new password.",
+    invalidLinkTitle: "This link is not valid",
+    invalidLinkDesc:
+      "The reset link is expired or incomplete. Click below to request a fresh one.",
+    requestNewLink: "Request a new reset link"
   },
   contact: {
     kicker: "━ Contact", titleA: "Get in", titleB: "touch",

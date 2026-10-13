@@ -7,6 +7,7 @@ import { LogIn, Menu, Package, Shield, ShoppingBag, UserPlus, X } from "lucide-r
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/store/cart-store";
 import { cn } from "@/lib/utils";
+import BrandLogo from "./BrandLogo";
 import UserMenu from "./UserMenu";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { isAdminEmail, subscribeToAuth } from "@/lib/auth-client";
@@ -72,13 +73,12 @@ export default function Navbar() {
       )}
     >
       <div className="container-x flex h-16 sm:h-20 items-center justify-between gap-2">
-        <Link href="/" className="flex items-center gap-2 group min-w-0">
-          <span className="text-2xl sm:text-3xl group-hover:animate-float">
-            🥭
-          </span>
-          <span className="font-display text-sm sm:text-xl font-bold text-ink leading-tight truncate">
-            Chapai <span className="shimmer-text">Mango</span> House
-          </span>
+        <Link
+          href="/"
+          className="flex items-center group min-w-0 shrink-0"
+          aria-label="Chapai Mango House — হোম"
+        >
+          <BrandLogo size="md" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 lg:gap-8">
@@ -91,6 +91,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "nav-link relative text-sm font-medium transition-colors",
                   (active ? "is-active " : "") + (active ? "text-mango-700" : "text-ink/70 hover:text-mango-600")

@@ -19,6 +19,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import SignOutButton from "@/components/auth/SignOutButton";
+import { MangoLogoMark } from "@/components/layout/BrandLogo";
 import { cn } from "@/lib/utils";
 
 // Note: there's no /admin/payment-methods entry — payment config
@@ -46,8 +47,8 @@ export default function Sidebar({ email }: { email: string }) {
       {/* Mobile top bar */}
       <div className="lg:hidden sticky top-0 z-40 bg-cream/90 backdrop-blur-xl border-b border-mango-200/50">
         <div className="flex items-center justify-between px-4 h-14">
-          <Link href="/admin" className="flex items-center gap-2">
-            <span className="text-2xl">🥭</span>
+          <Link href="/admin" className="flex items-center gap-2 group">
+            <MangoLogoMark className="h-8 w-8 shrink-0" />
             <span className="font-display font-bold">Admin</span>
           </Link>
           <button
@@ -76,8 +77,8 @@ export default function Sidebar({ email }: { email: string }) {
         )}
       >
         <div className="flex items-center justify-between px-6 h-16 border-b border-mango-200/60">
-          <Link href="/admin" className="flex items-center gap-2">
-            <span className="text-2xl">🥭</span>
+          <Link href="/admin" className="flex items-center gap-2 group">
+            <MangoLogoMark className="h-10 w-10 shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3" />
             <span className="font-display text-lg font-bold">
               Chapai <span className="shimmer-text">Admin</span>
             </span>

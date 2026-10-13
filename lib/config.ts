@@ -156,6 +156,7 @@ export function paymentMethodInfo(
       accountNumber: formatBankSummary(bank),
       advance,
       instructions,
+      logoUrl: m?.logoUrl || undefined,
       bankDetails: bank
     };
   }
@@ -164,7 +165,8 @@ export function paymentMethodInfo(
     label: def.label,
     accountNumber: (m?.number || "").trim(),
     advance,
-    instructions
+    instructions,
+    logoUrl: m?.logoUrl || undefined
   };
 }
 

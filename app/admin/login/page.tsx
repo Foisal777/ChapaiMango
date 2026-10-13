@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
 import LoginForm from "./LoginForm";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -22,12 +23,13 @@ export default function AdminLoginPage() {
         </Link>
 
         <div className="glass rounded-3xl p-8 shadow-soft">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-3xl">🥭</span>
-            <span className="font-display text-2xl font-bold">
-              Chapai <span className="shimmer-text">Mango</span>
-            </span>
-          </div>
+          <Link
+            href="/"
+            className="flex items-center justify-center mb-1 group"
+            aria-label="Chapai Mango House — home"
+          >
+            <BrandLogo size="lg" />
+          </Link>
           <h1 className="font-display text-2xl font-bold mt-4">
             Admin Login
           </h1>
@@ -53,7 +55,17 @@ export default function AdminLoginPage() {
               </ol>
             </div>
           ) : (
-            <LoginForm />
+            <>
+              <LoginForm />
+              <div className="text-center mt-4">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-mango-700 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </>
           )}
         </div>
 

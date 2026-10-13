@@ -118,11 +118,60 @@ const optionalUrl = z
   });
 const money = z.coerce.number().min(0, "0 ba tar beshi hote hobe").max(1_000_000);
 
+/**
+ * Logo field for payment methods (and any other single-image field).
+ *
+ * Accepts three shapes:
+ *   - ""                                  → no logo (default pill)
+ *   - https://…                           → remote / Supabase Storage URL
+ *   - data:image/…;base64,…               → inline upload (the gallery
+ *                                           picker's fallback when the
+ *                                           `site-images` bucket is not
+ *                                           set up yet)
+ *
+ * NOTE: this must stay in sync with what the admin form sends — zod
+ * silently STRIPS unknown keys, so forgetting a field here means the
+ * admin's value vanishes on save (this exact bug used to drop
+ * payment-method logos).
+ */
+const optionalLogoUrl = z
+  .string()
+  .trim()
+  .max(2_000_000)
+  .refine(
+    (v) =>
+      v === "" ||
+      /^https?:\/\/\S+$/i.test(v) ||
+      /^data:image\/[a-zA-Z0-9.+-]+;base64,[a-zA-Z0-9+/=]+$/i.test(v),
+    {
+      message: "Logo https:// URL ba uploaded image hote hobe"
+    }
+  );
+
 const methodSchema = z.object({
   enabled: z.boolean(),
   number: text(60),
   advance: money,
-  instructions: text(300)
+  instructions: text(300),
+  logoUrl: optionalLogoUrl
+});
+
+/** Admin-created payment method (no code deploy needed). */
+const customMethodSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .max(60)
+    .refine((v) => v === "" || /^[a-z0-9][a-z0-9-]*$/i.test(v), {
+      message: "Code choto hat ore, alphabet/number/-'r moddha gap"
+    }),
+  label: text(80),
+  enabled: z.boolean(),
+  number: text(60),
+  advance: money,
+  instructions: text(500),
+  logoUrl: optionalLogoUrl,
+  showInFooter: z.boolean()
 });
 
 export const siteSettingsSchema = z.object({
@@ -170,7 +219,11 @@ export const siteSettingsSchema = z.object({
       bankName: text(100),
       branch: text(100),
       accountNumber: text(60)
-    })
+    }),
+    // Admin-created methods from /admin/settings. `.default([])` so a
+    // save from a slightly older form payload (no key) still parses
+    // instead of silently dropping the whole section.
+    customMethods: z.array(customMethodSchema).default([])
   }),
   home: z.object({
     heroBadge: text(80),

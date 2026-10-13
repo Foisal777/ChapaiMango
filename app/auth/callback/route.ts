@@ -2,14 +2,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 
 /**
- * OAuth callback handler for Supabase social providers (e.g. Google).
+ * OAuth + password-recovery callback for Supabase.
  *
- * Flow:
- *   1. User clicks "Continue with Google" on /login or /signup.
- *   2. Browser hits Supabase -> Google -> Supabase, then is redirected
- *      back here with a `?code=...` query param.
- *   3. We exchange that code for a session cookie and bounce the user
- *      to the original `next` destination (defaults to /orders).
+ * Two flows land here with a `?code=...` query param:
+ *
+ *   1. Google OAuth — the user clicks "Continue with Google" on
+ *      /login or /signup, bounces through Google, and returns here.
+ *
+ *   2. Password recovery — the user clicks the link in the reset
+ *      email. GoTrue verifies the recovery token and redirects to our
+ *      `redirectTo` (set to /auth/callback?next=/reset-password) with
+ *      a PKCE code. We exchange it for a session and open
+ *      /reset-password, where the user picks the new password.
  *
  * Railway/Vercel/any-proxy note:
  *   `request.url` reflects the URL as the framework sees it *behind*
@@ -21,10 +25,16 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
+  const type = url.searchParams.get("type");
   const next = url.searchParams.get("next") || "/orders";
 
   // Only follow same-origin paths to avoid open-redirect abuse.
   const safeNext = next.startsWith("/") ? next : "/orders";
+
+  // Recovery detection: GoTrue marks the link with type=recovery and
+  // we also pass next=/reset-password from /forgot-password.
+  const isRecovery = type === "recovery" || safeNext === "/reset-password";
+  const target = isRecovery ? "/reset-password" : safeNext;
 
   // Resolve the *public* origin even when running behind a proxy
   // (Railway routes traffic to the app on 0.0.0.0:PORT internally).
@@ -39,14 +49,16 @@ export async function GET(request: NextRequest) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(safeNext, publicOrigin));
+      return NextResponse.redirect(new URL(target, publicOrigin));
     }
-    // Surface the provider error on the login page so the user sees it.
-    const failed = new URL("/login", publicOrigin);
+    // Surface the error on the page the user expects to be on.
+    const failed = new URL(target, publicOrigin);
     failed.searchParams.set("error", error.message);
     return NextResponse.redirect(failed);
   }
 
-  // Missing code or Supabase not configured -> back to login.
-  return NextResponse.redirect(new URL("/login", publicOrigin));
+  // Missing code (or Supabase not configured) -> back to the entry page.
+  // The /reset-password page shows its own "link not valid" state, so
+  // no error param is needed here.
+  return NextResponse.redirect(new URL(isRecovery ? "/reset-password" : "/login", publicOrigin));
 }
