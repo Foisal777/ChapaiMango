@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
+import BrandLogo from "@/components/layout/BrandLogo";
 import SignupForm from "./SignupForm";
 import { isSupabaseConfigured } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
@@ -36,12 +37,13 @@ export default async function CustomerSignupPage({
         </Link>
 
         <div className="glass rounded-3xl p-8 shadow-soft">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-2xl">🥭</span>
-            <span className="font-display text-lg font-bold">
-              Chapai <span className="shimmer-text">Mango</span> House
-            </span>
-          </div>
+          <Link
+            href="/"
+            className="flex items-center justify-center mb-1 group"
+            aria-label="Chapai Mango House — হোম"
+          >
+            <BrandLogo size="lg" />
+          </Link>
           <h1 className="font-display-bn text-2xl font-bold mt-4">
             {d.auth.signupTitle}
           </h1>

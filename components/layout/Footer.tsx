@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Mail, MapPin, Phone } from "lucide-react";
+import { MangoLogoMark } from "@/components/layout/BrandLogo";
 import AcceptedPayments from "@/components/social/AcceptedPayments";
 import { getSiteSettings } from "@/lib/settings";
 import { getDictionary } from "@/lib/i18n";
@@ -31,8 +32,8 @@ export default async function Footer() {
     <footer className="mt-24 bg-gradient-to-b from-cream to-mango-100 border-t border-mango-200/50">
       <div className="container-x py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
         <div className="md:col-span-2">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-3xl">🥭</span>
+          <div className="flex items-center gap-2.5 mb-4">
+            <MangoLogoMark className="h-10 w-10 shrink-0" />
             <span className="font-display text-xl sm:text-2xl font-bold">
               {brand.name}
             </span>

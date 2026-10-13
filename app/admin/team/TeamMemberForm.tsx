@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { Loader2, Save } from "lucide-react";
+import { LogoUploadField } from "@/components/admin/ImageUploadField";
 import {
   upsertTeamMemberAction,
   type TeamMemberInput
@@ -15,14 +16,22 @@ import type { AdminTeamMember } from "@/lib/admin/data";
 
 // Zod mirrors the server-side validation in `sanitiseTeamMember` so
 // the user gets immediate inline feedback. URLs are optional but if
-// present must start with http(s).
+// present must start with http(s) — OR be an inline data-URL, which is
+// what the gallery picker produces when the Supabase Storage bucket
+// isn't set up yet (see lib/upload-image.ts).
 const optionalUrl = z
   .string()
   .trim()
   .optional()
-  .refine((v) => !v || /^https?:\/\//i.test(v), {
-    message: "Must start with http:// or https://"
-  });
+  .refine(
+    (v) =>
+      !v ||
+      /^https?:\/\//i.test(v) ||
+      /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(v),
+    {
+      message: "Must start with http:// or https:// (or use the gallery upload)"
+    }
+  );
 
 const schema = z.object({
   name: z.string().min(2, "Name dorkar").max(120, "Onek boro"),
@@ -70,6 +79,7 @@ export default function TeamMemberForm({
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors }
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -204,12 +214,16 @@ export default function TeamMemberForm({
 
           <div>
             <label className="block text-xs font-semibold text-ink/70 mb-1.5">
-              Photo URL
+              Photo — গ্যালারি থেকে বা URL দিয়ে
             </label>
-            <input
-              {...register("photo_url")}
-              className="input-field"
-              placeholder="https://… (Supabase storage / Unsplash / FB CDN)"
+            <LogoUploadField
+              value={photoPreview || ""}
+              onChange={(u) =>
+                setValue("photo_url", u, { shouldValidate: true })
+              }
+              folder="team"
+              label="ছবি"
+              emptyHint=""
             />
             {errors.photo_url && (
               <p className="text-xs text-red-600 mt-1">
@@ -217,7 +231,8 @@ export default function TeamMemberForm({
               </p>
             )}
             <p className="text-[10px] text-ink/40 mt-1">
-              Public-e access kora jay emon ekta image link paste koren.
+              ফোন / কম্পিউটারের গ্যালারি থেকে সরাসরি ছবি বেছে নিন — অথবা
+              public image URL paste করুন (Supabase storage / Unsplash / FB CDN)।
             </p>
           </div>
 

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Banknote, Building2, Smartphone } from "lucide-react";
 
 /**
@@ -72,7 +75,12 @@ export default function PaymentBrandLogo({
   logoUrl?: string;
 }) {
   const displayLabel = label || BRAND_LABEL[code] || code;
-  if (logoUrl) {
+  const Icon = iconFor(code);
+  const isBuiltin = code in BRAND_BG;
+  // Broken logo URL → degrade to the brand pill instead of a dead image.
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  if (logoUrl && !logoFailed) {
     return (
       <span
         className={`inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 shadow-soft ring-1 ring-mango-200/70 transition hover:-translate-y-0.5 hover:shadow-glow ${className}`}
@@ -80,12 +88,16 @@ export default function PaymentBrandLogo({
         title={displayLabel}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoUrl} alt={displayLabel} className={`${IMG_SIZE[size]} object-contain`} loading="lazy" />
+        <img
+          src={logoUrl}
+          alt={displayLabel}
+          className={`${IMG_SIZE[size]} object-contain`}
+          loading="lazy"
+          onError={() => setLogoFailed(true)}
+        />
       </span>
     );
   }
-  const Icon = iconFor(code);
-  const isBuiltin = code in BRAND_BG;
   return (
     <span
       className={[
